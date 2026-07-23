@@ -2,6 +2,39 @@ import { NextResponse } from 'next/server';
 import { Payment, MercadoPagoConfig } from 'mercadopago';
 import { getSupabase } from '../../../lib/supabase';
 
+async function enviarEmailConfirmacao(pedido) {
+  const apiKey = process.env.RESEND_API_KEY;
+  if (!apiKey || !pedido.cliente_email) return;
+
+  const itensTexto = (pedido.itens || [])
+    .map((i) => `${i.quantidade}x ${i.nome} (Tam. ${i.tamanho}) — R$ ${Number(i.preco).toFixed(2)}`)
+    .join('<br>');
+
+  try {
+    await fetch('https://api.resend.com/emails', {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${apiKey}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        from: 'AGALU <pedidos@agalu.com.br>',
+        to: pedido.cliente_email,
+        subject: 'Recebemos seu pedido AGALU! ✅',
+        html: `
+          <div style="font-family: sans-serif; color: #4a4442;">
+            <h2 style="color: #d97b93;">Pagamento confirmado!</h2>
+            <p>Olá, ${pedido.cliente_nome || ''}!</p>
+            <p>Seu pagamento foi aprovado e já estamos preparando seu pedido para envio.</p>
+            <p><strong>Itens:</strong><br>${itensTexto}</p>
+            <p><strong>Frete:</strong> ${pedido.frete?.nome || ''} — R$ ${Number(pedido.frete?.preco || 0).toFixed(2)}</p>
+            <p><strong>Total:</strong> R$ ${Number(pedido.total || 0).toFixed(2)}</p>
+            <p>Assim que seu pedido for postado, você vai receber um novo e-mail com o código de rastreio.</p>
+            <p>Obrigado por comprar na AGALU! 💛</p>
+          </div>
+        `,
+      }),
+    });
+  } catch (e) {}
+}
+
 export async function POST(req) {
   try {
     const body = await req.json().catch(() => ({}));
@@ -23,10 +56,18 @@ export async function POST(req) {
     const supabase = getSupabase();
     if (supabase && pedidoId) {
       const statusMap = { approved: 'pago', pending: 'pendente', rejected: 'recusado', cancelled: 'cancelado' };
-      await supabase
+      const novoStatus = statusMap[status] || status;
+
+      const { data: pedidoAtualizado } = await supabase
         .from('pedidos')
-        .update({ status_pagamento: statusMap[status] || status })
-        .eq('id', pedidoId);
+        .update({ status_pagamento: novoStatus })
+        .eq('id', pedidoId)
+        .select()
+        .single();
+
+      if (novoStatus === 'pago' && pedidoAtualizado) {
+        await enviarEmailConfirmacao(pedidoAtualizado);
+      }
     }
 
     return NextResponse.json({ ok: true });
