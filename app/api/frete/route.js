@@ -10,7 +10,7 @@ export async function POST(req) {
     return NextResponse.json({ erro: 'Digite um CEP válido.' });
   }
 
-  const pesoTotal = Math.max(0.3, (itens || []).reduce((acc, i) => acc + i.quantidade * 0.15, 0));
+  const pesoTotal = Math.max(0.3, (itens || []).reduce((acc, i) => acc + i.quantidade * 0.11, 0));
   const token = process.env.MELHOR_ENVIO_TOKEN;
 
   // MODO REAL: se o token do Melhor Envio estiver configurado
