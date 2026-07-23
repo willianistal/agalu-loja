@@ -4,12 +4,20 @@ import { useState } from 'react';
 const statusPagamentoOpcoes = ['pendente', 'pago', 'recusado', 'cancelado'];
 const statusEnvioOpcoes = ['aguardando_envio', 'enviado', 'entregue'];
 
+const abas = [
+  { chave: 'pendente', label: 'Pendente de pagamento', filtro: (p) => p.status_pagamento === 'pendente' },
+  { chave: 'pago', label: 'Pago — aguardando envio', filtro: (p) => p.status_pagamento === 'pago' && p.status_envio === 'aguardando_envio' },
+  { chave: 'enviado', label: 'Enviado / Entregue', filtro: (p) => p.status_envio === 'enviado' || p.status_envio === 'entregue' },
+  { chave: 'todos', label: 'Todos', filtro: () => true },
+];
+
 export default function PedidosAdminPage() {
   const [senha, setSenha] = useState('');
   const [autenticado, setAutenticado] = useState(false);
   const [erro, setErro] = useState('');
   const [pedidos, setPedidos] = useState([]);
   const [carregando, setCarregando] = useState(false);
+  const [abaAtiva, setAbaAtiva] = useState('pendente');
 
   async function carregarPedidos(senhaAtual) {
     setCarregando(true);
@@ -65,15 +73,42 @@ export default function PedidosAdminPage() {
     );
   }
 
+  const pedidosFiltrados = pedidos.filter(abas.find((a) => a.chave === abaAtiva).filtro);
+
   return (
     <div className="container" style={{ padding: '30px 20px' }}>
       <h1>Painel AGALU — Pedidos</h1>
       <button className="btn btn-secundario" onClick={() => carregarPedidos(senha)} style={{ marginBottom: 16 }}>
         Atualizar lista
       </button>
+
+      <div style={{ display: 'flex', gap: 8, marginBottom: 20, flexWrap: 'wrap' }}>
+        {abas.map((a) => {
+          const qtd = pedidos.filter(a.filtro).length;
+          const ativa = abaAtiva === a.chave;
+          return (
+            <button
+              key={a.chave}
+              onClick={() => setAbaAtiva(a.chave)}
+              style={{
+                padding: '8px 14px',
+                borderRadius: 20,
+                border: ativa ? '2px solid #d97b93' : '1px solid #f0e4de',
+                background: ativa ? '#fde3ea' : 'white',
+                fontWeight: ativa ? 700 : 500,
+                cursor: 'pointer',
+              }}
+            >
+              {a.label} ({qtd})
+            </button>
+          );
+        })}
+      </div>
+
       {erro && <p style={{ color: '#c0392b' }}>{erro}</p>}
-      {pedidos.length === 0 && <p>Nenhum pedido ainda.</p>}
-      {pedidos.map((p) => (
+      {pedidosFiltrados.length === 0 && <p>Nenhum pedido nessa aba.</p>}
+
+      {pedidosFiltrados.map((p) => (
         <div key={p.id} style={{ border: '1px solid #f0e4de', borderRadius: 10, padding: 16, marginBottom: 14, background: 'white' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap', gap: 10 }}>
             <div>
@@ -136,6 +171,12 @@ export default function PedidosAdminPage() {
               </select>
             </div>
           </div>
+
+          {p.codigo_rastreio && (
+            <div style={{ marginTop: 10, fontSize: 14 }}>
+              <strong>Rastreio:</strong> {p.codigo_rastreio}
+            </div>
+          )}
         </div>
       ))}
     </div>
