@@ -21,7 +21,7 @@ async function enviarEmailRastreio(pedido) {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        from: 'AGALU <onboarding@resend.dev>',
+       from: 'AGALU <pedidos@agalu.com.br>', 
         to: pedido.cliente_email,
         subject: 'Seu pedido AGALU foi enviado! 📦',
         html: `
