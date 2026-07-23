@@ -5,7 +5,7 @@ import { useCart } from '../../lib/CartContext';
 export default function CheckoutPage() {
   const { itens, total } = useCart();
   const [form, setForm] = useState({
-    nome: '', email: '', telefone: '',
+    nome: '', email: '', telefone: '', cpf: '',
     cep: '', endereco: '', numero: '', complemento: '', bairro: '', cidade: '', uf: '',
   });
   const [frete, setFrete] = useState(null);
@@ -101,6 +101,10 @@ export default function CheckoutPage() {
       <div className="form-linha">
         <label>Telefone / WhatsApp</label>
         <input value={form.telefone} onChange={(e) => handleChange('telefone', e.target.value)} />
+      </div>
+      <div className="form-linha">
+        <label>CPF</label>
+        <input value={form.cpf} onChange={(e) => handleChange('cpf', e.target.value)} placeholder="000.000.000-00" />
       </div>
 
       <h3>Endereço de entrega</h3>
