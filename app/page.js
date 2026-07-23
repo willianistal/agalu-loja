@@ -3,6 +3,7 @@ import { getProdutos, imagemProduto } from '../lib/produtos';
 import { formatarNomeProduto } from '../lib/produtoDisplay';
 import HeroCarousel from '../components/HeroCarousel';
 import SobreNos from '../components/SobreNos';
+import Avaliacoes from '../components/Avaliacoes';
 
 export default function Home() {
   const produtos = getProdutos();
@@ -54,6 +55,8 @@ export default function Home() {
           </Link>
         ))}
       </div>
+
+      <Avaliacoes />
 
       <SobreNos />
 
