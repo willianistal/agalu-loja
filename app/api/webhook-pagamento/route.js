@@ -35,6 +35,24 @@ async function enviarEmailConfirmacao(pedido) {
   } catch (e) {}
 }
 
+async function enviarWhatsAppVenda(pedido) {
+  const apiKey = process.env.CALLMEBOT_APIKEY;
+  const numero = process.env.WHATSAPP_NOTIFICACAO;
+  if (!apiKey || !numero) return;
+
+  const itensTexto = (pedido.itens || [])
+    .map((i) => `${i.quantidade}x ${i.nome} (Tam. ${i.tamanho})`)
+    .join(', ');
+
+  const texto = `🎉 Nova venda AGALU!\nCliente: ${pedido.cliente_nome || ''}\nItens: ${itensTexto}\nTotal: R$ ${Number(pedido.total || 0).toFixed(2)}`;
+
+  try {
+    await fetch(
+      `https://api.callmebot.com/whatsapp.php?phone=${numero}&text=${encodeURIComponent(texto)}&apikey=${apiKey}`
+    );
+  } catch (e) {}
+}
+
 export async function POST(req) {
   try {
     const body = await req.json().catch(() => ({}));
@@ -67,6 +85,7 @@ export async function POST(req) {
 
       if (novoStatus === 'pago' && pedidoAtualizado) {
         await enviarEmailConfirmacao(pedidoAtualizado);
+        await enviarWhatsAppVenda(pedidoAtualizado);
       }
     }
 
