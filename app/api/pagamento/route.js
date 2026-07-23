@@ -23,6 +23,7 @@ export async function POST(req) {
         cliente_nome: cliente?.nome,
         cliente_email: cliente?.email,
         cliente_telefone: cliente?.telefone,
+        cliente_cpf: cliente?.cpf,
         endereco: {
           cep: cliente?.cep,
           endereco: cliente?.endereco,
