@@ -21,7 +21,7 @@ async function enviarEmailRastreio(pedido) {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-       from: 'AGALU <pedidos@agalu.com.br>', 
+        from: 'AGALU <pedidos@agalu.com.br>',
         to: pedido.cliente_email,
         subject: 'Seu pedido AGALU foi enviado! 📦',
         html: `
@@ -39,6 +39,35 @@ async function enviarEmailRastreio(pedido) {
   } catch (e) {
     // não bloqueia o fluxo se o e-mail falhar
   }
+}
+
+async function enviarEmailAvaliacao(pedido) {
+  const apiKey = process.env.RESEND_API_KEY;
+  if (!apiKey || !pedido.cliente_email) return;
+
+  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://www.agalu.com.br';
+  const link = `${baseUrl}/avaliar/${pedido.id}`;
+
+  try {
+    await fetch('https://api.resend.com/emails', {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${apiKey}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        from: 'AGALU <pedidos@agalu.com.br>',
+        to: pedido.cliente_email,
+        subject: 'Como foi sua compra na AGALU? 💛',
+        html: `
+          <div style="font-family: sans-serif; color: #4a4442;">
+            <h2 style="color: #d97b93;">Seu pedido chegou!</h2>
+            <p>Olá, ${pedido.cliente_nome || ''}!</p>
+            <p>Esperamos que tenha gostado das peças. Poderia avaliar sua compra? Leva só 1 minuto:</p>
+            <p><a href="${link}" style="background: #d97b93; color: white; padding: 12px 24px; border-radius: 8px; text-decoration: none;">Avaliar minha compra</a></p>
+            <p>Obrigado por comprar na AGALU! 💛</p>
+          </div>
+        `,
+      }),
+    });
+  } catch (e) {}
 }
 
 export async function GET(req) {
@@ -82,6 +111,10 @@ export async function POST(req) {
 
   if (campo === 'status_envio' && valor === 'enviado') {
     await enviarEmailRastreio(pedidoAtualizado);
+  }
+
+  if (campo === 'status_envio' && valor === 'entregue') {
+    await enviarEmailAvaliacao(pedidoAtualizado);
   }
 
   return NextResponse.json({ pedido: pedidoAtualizado });
