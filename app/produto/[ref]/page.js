@@ -5,6 +5,7 @@ import { getProdutoPorRef, imagemProduto } from '../../../lib/produtos';
 import { formatarNomeProduto, AVISO_ESTAMPA_SORTIDA } from '../../../lib/produtoDisplay';
 import { getCoresPorTecido } from '../../../lib/cores';
 import { useCart } from '../../../lib/CartContext';
+import Avaliacoes from '../../../components/Avaliacoes';
 
 export default function ProdutoDetalhe() {
   const { ref } = useParams();
@@ -91,6 +92,8 @@ export default function ProdutoDetalhe() {
           </div>
         </div>
       </div>
+
+      <Avaliacoes produtoRef={produto.ref} titulo="Avaliações desta peça" />
     </div>
   );
 }
