@@ -172,11 +172,19 @@ export default function PedidosAdminPage() {
             </div>
           </div>
 
-          {p.codigo_rastreio && (
-            <div style={{ marginTop: 10, fontSize: 14 }}>
-              <strong>Rastreio:</strong> {p.codigo_rastreio}
-            </div>
-          )}
+          <div style={{ marginTop: 10 }}>
+            <label style={{ display: 'block', fontSize: 13, marginBottom: 4 }}>Código de rastreio</label>
+            <input
+              type="text"
+              defaultValue={p.codigo_rastreio || ''}
+              placeholder="Ex: BR123456789BR"
+              style={{ width: 220 }}
+              onBlur={(e) => atualizarStatus(p, 'codigo_rastreio', e.target.value)}
+            />
+            <span style={{ fontSize: 12, color: '#8a827e', marginLeft: 8 }}>
+              Preencha o código antes de marcar como "enviado" — o e-mail já sai com ele.
+            </span>
+          </div>
         </div>
       ))}
     </div>
