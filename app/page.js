@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { getProdutos, imagemProduto } from '../lib/produtos';
 import { formatarNomeProduto } from '../lib/produtoDisplay';
 import HeroCarousel from '../components/HeroCarousel';
+import SobreNos from '../components/SobreNos';
 
 export default function Home() {
   const produtos = getProdutos();
@@ -53,6 +54,9 @@ export default function Home() {
           </Link>
         ))}
       </div>
+
+      <SobreNos />
+
       <div style={{ textAlign: 'center', paddingBottom: 50 }}>
         <Link href="/produtos" className="btn btn-secundario">Ver catálogo completo</Link>
       </div>
