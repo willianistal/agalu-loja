@@ -18,6 +18,7 @@ export default function PedidosAdminPage() {
   const [pedidos, setPedidos] = useState([]);
   const [carregando, setCarregando] = useState(false);
   const [abaAtiva, setAbaAtiva] = useState('pendente');
+  const [gerandoEtiqueta, setGerandoEtiqueta] = useState(null);
 
   async function carregarPedidos(senhaAtual) {
     setCarregando(true);
@@ -55,6 +56,31 @@ export default function PedidosAdminPage() {
     });
     const data = await res.json();
     if (data.erro) setErro(data.erro);
+  }
+
+  async function gerarEtiqueta(pedido) {
+    setGerandoEtiqueta(pedido.id);
+    setErro('');
+    try {
+      const res = await fetch('/api/pedidos/gerar-etiqueta', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'x-admin-password': senha },
+        body: JSON.stringify({ id: pedido.id }),
+      });
+      const data = await res.json();
+      if (data.erro) {
+        setErro('Erro ao gerar etiqueta: ' + data.erro);
+      } else {
+        setPedidos((prev) =>
+          prev.map((p) =>
+            p.id === pedido.id ? { ...p, codigo_rastreio: data.codigo_rastreio, status_envio: 'enviado' } : p
+          )
+        );
+      }
+    } catch (e) {
+      setErro('Erro inesperado ao gerar etiqueta.');
+    }
+    setGerandoEtiqueta(null);
   }
 
   if (!autenticado) {
@@ -182,8 +208,24 @@ export default function PedidosAdminPage() {
               onBlur={(e) => atualizarStatus(p, 'codigo_rastreio', e.target.value)}
             />
             <span style={{ fontSize: 12, color: '#8a827e', marginLeft: 8 }}>
-              Preencha o código antes de marcar como "enviado" — o e-mail já sai com ele.
+              Preencha manualmente OU use o botão abaixo para gerar automático.
             </span>
+          </div>
+
+          <div style={{ marginTop: 12 }}>
+            <button
+              className="btn"
+              onClick={() => gerarEtiqueta(p)}
+              disabled={gerandoEtiqueta === p.id || p.status_pagamento !== 'pago'}
+              style={{ background: '#6fb8a8' }}
+            >
+              {gerandoEtiqueta === p.id ? 'Gerando etiqueta...' : 'Gerar etiqueta automaticamente (Melhor Envio)'}
+            </button>
+            {p.status_pagamento !== 'pago' && (
+              <span style={{ fontSize: 12, color: '#8a827e', marginLeft: 8 }}>
+                Disponível só depois que o pagamento estiver "pago".
+              </span>
+            )}
           </div>
         </div>
       ))}
