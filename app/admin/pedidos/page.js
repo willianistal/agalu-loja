@@ -2,12 +2,14 @@
 import { useState } from 'react';
 
 const statusPagamentoOpcoes = ['pendente', 'pago', 'recusado', 'cancelado'];
-const statusEnvioOpcoes = ['aguardando_envio', 'enviado', 'entregue'];
+const statusEnvioOpcoes = ['aguardando_envio', 'etiqueta_gerada', 'enviado', 'entregue'];
 
 const abas = [
   { chave: 'pendente', label: 'Pendente de pagamento', filtro: (p) => p.status_pagamento === 'pendente' },
-  { chave: 'pago', label: 'Pago — aguardando envio', filtro: (p) => p.status_pagamento === 'pago' && p.status_envio === 'aguardando_envio' },
-  { chave: 'enviado', label: 'Enviado / Entregue', filtro: (p) => p.status_envio === 'enviado' || p.status_envio === 'entregue' },
+  { chave: 'pago', label: 'Pago', filtro: (p) => p.status_pagamento === 'pago' && p.status_envio === 'aguardando_envio' },
+  { chave: 'etiqueta', label: 'Etiqueta gerada', filtro: (p) => p.status_envio === 'etiqueta_gerada' },
+  { chave: 'enviado', label: 'Enviado', filtro: (p) => p.status_envio === 'enviado' },
+  { chave: 'entregue', label: 'Entregue', filtro: (p) => p.status_envio === 'entregue' },
   { chave: 'todos', label: 'Todos', filtro: () => true },
 ];
 
@@ -19,6 +21,8 @@ export default function PedidosAdminPage() {
   const [carregando, setCarregando] = useState(false);
   const [abaAtiva, setAbaAtiva] = useState('pendente');
   const [gerandoEtiqueta, setGerandoEtiqueta] = useState(null);
+  const [dataInicio, setDataInicio] = useState('');
+  const [dataFim, setDataFim] = useState('');
 
   async function carregarPedidos(senhaAtual) {
     setCarregando(true);
@@ -73,7 +77,7 @@ export default function PedidosAdminPage() {
       } else {
         setPedidos((prev) =>
           prev.map((p) =>
-            p.id === pedido.id ? { ...p, codigo_rastreio: data.codigo_rastreio, status_envio: 'enviado' } : p
+            p.id === pedido.id ? { ...p, codigo_rastreio: data.codigo_rastreio, status_envio: 'etiqueta_gerada' } : p
           )
         );
       }
@@ -99,7 +103,17 @@ export default function PedidosAdminPage() {
     );
   }
 
-  const pedidosFiltrados = pedidos.filter(abas.find((a) => a.chave === abaAtiva).filtro);
+  const dentroDoIntervalo = (p) => {
+    if (!dataInicio && !dataFim) return true;
+    const dataPedido = new Date(p.criado_em);
+    if (dataInicio && dataPedido < new Date(dataInicio + 'T00:00:00')) return false;
+    if (dataFim && dataPedido > new Date(dataFim + 'T23:59:59')) return false;
+    return true;
+  };
+
+  const pedidosFiltrados = pedidos
+    .filter(abas.find((a) => a.chave === abaAtiva).filtro)
+    .filter(dentroDoIntervalo);
 
   return (
     <div className="container" style={{ padding: '30px 20px' }}>
@@ -108,7 +122,7 @@ export default function PedidosAdminPage() {
         Atualizar lista
       </button>
 
-      <div style={{ display: 'flex', gap: 8, marginBottom: 20, flexWrap: 'wrap' }}>
+      <div style={{ display: 'flex', gap: 8, marginBottom: 16, flexWrap: 'wrap' }}>
         {abas.map((a) => {
           const qtd = pedidos.filter(a.filtro).length;
           const ativa = abaAtiva === a.chave;
@@ -131,8 +145,28 @@ export default function PedidosAdminPage() {
         })}
       </div>
 
+      <div style={{ display: 'flex', gap: 12, alignItems: 'center', marginBottom: 20, flexWrap: 'wrap' }}>
+        <div>
+          <label style={{ display: 'block', fontSize: 13, marginBottom: 4 }}>De</label>
+          <input type="date" value={dataInicio} onChange={(e) => setDataInicio(e.target.value)} />
+        </div>
+        <div>
+          <label style={{ display: 'block', fontSize: 13, marginBottom: 4 }}>Até</label>
+          <input type="date" value={dataFim} onChange={(e) => setDataFim(e.target.value)} />
+        </div>
+        {(dataInicio || dataFim) && (
+          <button
+            className="btn btn-secundario"
+            style={{ marginTop: 18 }}
+            onClick={() => { setDataInicio(''); setDataFim(''); }}
+          >
+            Limpar filtro de data
+          </button>
+        )}
+      </div>
+
       {erro && <p style={{ color: '#c0392b' }}>{erro}</p>}
-      {pedidosFiltrados.length === 0 && <p>Nenhum pedido nessa aba.</p>}
+      {pedidosFiltrados.length === 0 && <p>Nenhum pedido nessa aba/período.</p>}
 
       {pedidosFiltrados.map((p) => (
         <div key={p.id} style={{ border: '1px solid #f0e4de', borderRadius: 10, padding: 16, marginBottom: 14, background: 'white' }}>
@@ -226,6 +260,9 @@ export default function PedidosAdminPage() {
                 Disponível só depois que o pagamento estiver "pago".
               </span>
             )}
+            <p style={{ fontSize: 12, color: '#8a827e', marginTop: 6 }}>
+              Depois de postar de verdade nos Correios, mude o "Envio" acima para <strong>enviado</strong> — é isso que dispara o e-mail de rastreio pro cliente.
+            </p>
           </div>
         </div>
       ))}
