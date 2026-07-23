@@ -32,6 +32,8 @@ export async function POST(req) {
       const data = await resp.json();
       const opcoes = (Array.isArray(data) ? data : [])
         .filter((o) => !o.error)
+        .filter((o) => (o.company?.name || '').toLowerCase().includes('correios'))
+        .filter((o) => /pac|sedex/i.test(o.name || ''))
         .map((o) => ({ id: String(o.id), nome: `${o.company?.name || ''} - ${o.name}`, preco: parseFloat(o.price), prazo: o.delivery_time }));
       if (opcoes.length > 0) return NextResponse.json({ opcoes });
     } catch (e) {
