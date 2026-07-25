@@ -1,5 +1,5 @@
 'use client';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { getProdutoPorRef, imagemProduto } from '../../../lib/produtos';
 import { formatarNomeProduto, AVISO_ESTAMPA_SORTIDA } from '../../../lib/produtoDisplay';
@@ -19,13 +19,27 @@ export default function ProdutoDetalhe() {
   const [cor, setCor] = useState(cores[0]?.nome || '');
   const [quantidade, setQuantidade] = useState(1);
   const [mensagem, setMensagem] = useState('');
+  const [preco, setPreco] = useState(12);
+  const [esgotado, setEsgotado] = useState(false);
+
+  useEffect(() => {
+    fetch('/api/produtos')
+      .then((r) => r.json())
+      .then((data) => {
+        const encontrado = (data.produtos || []).find((p) => p.ref === ref);
+        if (encontrado) {
+          setPreco(encontrado.preco ?? 12);
+          setEsgotado(encontrado.esgotado ?? false);
+        }
+      });
+  }, [ref]);
 
   if (!produto) {
     return <div className="container"><p>Produto não encontrado.</p></div>;
   }
 
   function handleAdicionar() {
-    adicionar({ ...produto, nome: formatarNomeProduto(produto.nome) }, tamanho, quantidade, cor);
+    adicionar({ ...produto, nome: formatarNomeProduto(produto.nome), preco }, tamanho, quantidade, cor);
     setMensagem('Adicionado ao carrinho!');
     setTimeout(() => setMensagem(''), 2000);
   }
@@ -40,7 +54,10 @@ export default function ProdutoDetalhe() {
           {produto.detalhe && (
             <p className="aviso-estampa">🎨 {AVISO_ESTAMPA_SORTIDA}</p>
           )}
-          <p style={{ fontSize: 32, fontWeight: 800, color: '#d97b93' }}>R$ 12,00</p>
+          <p style={{ fontSize: 32, fontWeight: 800, color: '#d97b93' }}>R$ {Number(preco).toFixed(2)}</p>
+          {esgotado && (
+            <p style={{ color: '#c0392b', fontWeight: 700, fontSize: 18 }}>Produto esgotado no momento</p>
+          )}
 
           {cores.length > 0 && (
             <>
@@ -82,7 +99,9 @@ export default function ProdutoDetalhe() {
             />
           </div>
 
-          <button className="btn" onClick={handleAdicionar}>Adicionar ao carrinho</button>
+          <button className="btn" onClick={handleAdicionar} disabled={esgotado}>
+            {esgotado ? 'Indisponível' : 'Adicionar ao carrinho'}
+          </button>
           {mensagem && <p style={{ color: '#6fb8a8', fontWeight: 700 }}>{mensagem}</p>}
 
           <div style={{ marginTop: 20 }}>
