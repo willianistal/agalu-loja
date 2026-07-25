@@ -1,5 +1,5 @@
 'use client';
-import { useState, useMemo, Suspense } from 'react';
+import { useState, useMemo, useEffect, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { getProdutos, imagemProduto } from '../../lib/produtos';
@@ -20,9 +20,26 @@ function ProdutosConteudo() {
   const [estacao, setEstacao] = useState(estacaoInicial);
   const [tecido, setTecido] = useState('todos');
   const [tamanho, setTamanho] = useState('todos');
+  const [dadosBanco, setDadosBanco] = useState({});
 
-  const produtos = getProdutos();
-  const tecidos = useMemo(() => [...new Set(produtos.map((p) => p.tecido))], [produtos]);
+  useEffect(() => {
+    fetch('/api/produtos')
+      .then((r) => r.json())
+      .then((data) => {
+        const mapa = {};
+        (data.produtos || []).forEach((p) => { mapa[p.ref] = p; });
+        setDadosBanco(mapa);
+      });
+  }, []);
+
+  const produtosBase = getProdutos();
+  const produtos = produtosBase.map((p) => ({
+    ...p,
+    preco: dadosBanco[p.ref]?.preco ?? 12,
+    esgotado: dadosBanco[p.ref]?.esgotado ?? false,
+  }));
+
+  const tecidos = useMemo(() => [...new Set(produtosBase.map((p) => p.tecido))], [produtosBase]);
 
   const filtrados = produtos.filter((p) => {
     if (estacao !== 'todos' && p.estacao !== estacao) return false;
@@ -62,17 +79,8 @@ function ProdutosConteudo() {
 
       <div className="grid-produtos">
         {filtrados.map((p) => (
-          <Link key={p.ref} href={`/produto/${p.ref}`} className="produto-card">
+          <Link key={p.ref} href={`/produto/${p.ref}`} className="produto-card" style={p.esgotado ? { opacity: 0.5 } : {}}>
             <img src={imagemProduto(p.ref)} alt={p.nome} onError={(e) => { e.target.src = '/images/placeholder.jpg'; }} />
             <div className="info">
               <p className="nome">{formatarNomeProduto(p.nome)}</p>
-              {p.detalhe && <p className="badge-estampa">Estampa sortida</p>}
-              <p className="tecido">{p.tecido} • Tam. {p.tamanhos} • REF {p.ref}</p>
-              <p className="preco">R$ {p.preco || 12},00</p>
-            </div>
-          </Link>
-        ))}
-      </div>
-    </div>
-  );
-}
+              {p.detalhe && <p
