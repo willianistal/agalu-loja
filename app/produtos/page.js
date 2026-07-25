@@ -83,4 +83,14 @@ function ProdutosConteudo() {
             <img src={imagemProduto(p.ref)} alt={p.nome} onError={(e) => { e.target.src = '/images/placeholder.jpg'; }} />
             <div className="info">
               <p className="nome">{formatarNomeProduto(p.nome)}</p>
-              {p.detalhe && <p
+              {p.detalhe && <p className="badge-estampa">Estampa sortida</p>}
+              <p className="tecido">{p.tecido} • Tam. {p.tamanhos} • REF {p.ref}</p>
+              <p className="preco">R$ {Number(p.preco).toFixed(2)}</p>
+              {p.esgotado && <p style={{ color: '#c0392b', fontWeight: 700 }}>Esgotado</p>}
+            </div>
+          </Link>
+        ))}
+      </div>
+    </div>
+  );
+}
