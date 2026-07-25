@@ -21,8 +21,6 @@ export default function AdminPage() {
   }, [autenticado]);
 
   function handleLogin() {
-    // A senha real é verificada no servidor a cada edição (x-admin-password).
-    // Aqui é só a "porta de entrada" da tela.
     if (senha.length > 0) {
       setAutenticado(true);
     } else {
@@ -33,10 +31,17 @@ export default function AdminPage() {
   async function salvarProduto(produto, campo, valor) {
     const atualizado = { ...produto, [campo]: valor };
     setProdutos((prev) => prev.map((p) => (p.ref === produto.ref ? atualizado : p)));
+
+    const corpo = {
+      ref: produto.ref,
+      preco: campo === 'preco' ? valor : produto.preco,
+      esgotado: campo === 'esgotado' ? valor : produto.esgotado,
+    };
+
     const res = await fetch('/api/produtos', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'x-admin-password': senha },
-      body: JSON.stringify(atualizado),
+      body: JSON.stringify(corpo),
     });
     const data = await res.json();
     if (data.erro) setErro(data.erro);
@@ -61,8 +66,7 @@ export default function AdminPage() {
       <h1>Painel AGALU — Produtos</h1>
       {!editavel && (
         <p style={{ background: '#fde3ea', padding: 14, borderRadius: 10, color: '#a8546b' }}>
-          Modo somente leitura: para editar preço/estoque direto pelo site, conecte o banco Supabase (veja o README que te entreguei).
-          Por enquanto os produtos vêm do catálogo fixo.
+          Modo somente leitura: banco de dados não está retornando produtos editáveis ainda.
         </p>
       )}
       {erro && <p style={{ color: '#c0392b' }}>{erro}</p>}
