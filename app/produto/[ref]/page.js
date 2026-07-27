@@ -2,7 +2,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { getProdutoPorRef, imagemProduto } from '../../../lib/produtos';
-import { formatarNomeProduto, AVISO_ESTAMPA_SORTIDA } from '../../../lib/produtoDisplay';
+import { formatarNomeProduto, AVISO_ESTAMPA_SORTIDA, getComposicaoTecido } from '../../../lib/produtoDisplay';
 import { getCoresPorTecido } from '../../../lib/cores';
 import { useCart } from '../../../lib/CartContext';
 import Avaliacoes from '../../../components/Avaliacoes';
@@ -51,6 +51,7 @@ export default function ProdutoDetalhe() {
         <div>
           <h1>{formatarNomeProduto(produto.nome)}</h1>
           <p style={{ color: '#8a827e' }}>Tecido: {produto.tecido} • Estação: {produto.estacao} • REF {produto.ref}</p>
+          <p style={{ color: '#8a827e' }}>Composição: {getComposicaoTecido(produto.tecido)}</p>
           {produto.detalhe && (
             <p className="aviso-estampa">🎨 {AVISO_ESTAMPA_SORTIDA}</p>
           )}
