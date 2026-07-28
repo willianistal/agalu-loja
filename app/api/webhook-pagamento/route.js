@@ -38,7 +38,10 @@ async function enviarEmailConfirmacao(pedido) {
 async function enviarWhatsAppVenda(pedido) {
   const apiKey = process.env.CALLMEBOT_APIKEY;
   const numero = process.env.WHATSAPP_NOTIFICACAO;
-  if (!apiKey || !numero) return;
+  if (!apiKey || !numero) {
+    console.error('[WhatsApp] CALLMEBOT_APIKEY ou WHATSAPP_NOTIFICACAO não configurados na Vercel.');
+    return;
+  }
 
   const itensTexto = (pedido.itens || [])
     .map((i) => `${i.quantidade}x ${i.nome} (Tam. ${i.tamanho})`)
@@ -47,10 +50,16 @@ async function enviarWhatsAppVenda(pedido) {
   const texto = `🎉 Nova venda AGALU!\nCliente: ${pedido.cliente_nome || ''}\nItens: ${itensTexto}\nTotal: R$ ${Number(pedido.total || 0).toFixed(2)}`;
 
   try {
-    await fetch(
+    const resp = await fetch(
       `https://api.callmebot.com/whatsapp.php?phone=${numero}&text=${encodeURIComponent(texto)}&apikey=${apiKey}`
     );
-  } catch (e) {}
+    const respostaTexto = await resp.text();
+    // Aparece nos "Runtime Logs" do projeto na Vercel — é o jeito de ver se o
+    // CallMeBot aceitou ou recusou o envio (ex.: telefone não autorizado, apikey inválida).
+    console.log(`[WhatsApp] Status ${resp.status} — resposta do CallMeBot: ${respostaTexto.slice(0, 300)}`);
+  } catch (e) {
+    console.error('[WhatsApp] Erro ao chamar CallMeBot: ' + e.message);
+  }
 }
 
 export async function POST(req) {
