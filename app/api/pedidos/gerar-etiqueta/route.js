@@ -29,6 +29,7 @@ export async function POST(req) {
   const headers = {
     Authorization: `Bearer ${token}`,
     'Content-Type': 'application/json',
+    Accept: 'application/json',
     'User-Agent': 'AGALU (contato@agalu.com.br)',
   };
 
