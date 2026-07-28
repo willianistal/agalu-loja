@@ -39,8 +39,11 @@ export async function POST(req) {
     name: process.env.REMETENTE_NOME,
     phone: process.env.REMETENTE_TELEFONE,
     email: process.env.REMETENTE_EMAIL,
-    document: process.env.REMETENTE_CNPJ,
-    company_document: process.env.REMETENTE_CNPJ,
+    // "document" precisa ser o CPF do responsável (pessoa física); o CNPJ da
+    // empresa vai separado em "company_document". Enviar o CNPJ em "document"
+    // faz a API do Melhor Envio recusar com "deve ter um CPF válido".
+    document: (process.env.REMETENTE_CPF || '').replace(/\D/g, ''),
+    company_document: (process.env.REMETENTE_CNPJ || '').replace(/\D/g, ''),
     address: process.env.REMETENTE_ENDERECO,
     number: process.env.REMETENTE_NUMERO,
     district: process.env.REMETENTE_BAIRRO,
