@@ -60,10 +60,26 @@ export async function POST(req) {
 
     const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://seusite.vercel.app';
 
+    // Mercado Pago exige CPF/CNPJ do pagador para liberar o pagamento via Pix.
+    // Sem isso, o botão "Criar Pix" fica desabilitado no checkout.
+    const cpfLimpo = (cliente?.cpf || '').replace(/\D/g, '');
+
+    const payer = {
+      name: cliente?.nome,
+      email: cliente?.email,
+    };
+
+    if (cpfLimpo) {
+      payer.identification = {
+        type: cpfLimpo.length > 11 ? 'CNPJ' : 'CPF',
+        number: cpfLimpo,
+      };
+    }
+
     const result = await preference.create({
       body: {
         items,
-        payer: { name: cliente?.nome, email: cliente?.email },
+        payer,
         back_urls: {
           success: `${baseUrl}/pedido-confirmado`,
           failure: `${baseUrl}/checkout`,
