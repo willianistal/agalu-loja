@@ -39,9 +39,6 @@ export async function POST(req) {
     name: process.env.REMETENTE_NOME,
     phone: process.env.REMETENTE_TELEFONE,
     email: process.env.REMETENTE_EMAIL,
-    // "document" precisa ser o CPF do responsável (pessoa física); o CNPJ da
-    // empresa vai separado em "company_document". Enviar o CNPJ em "document"
-    // faz a API do Melhor Envio recusar com "deve ter um CPF válido".
     document: (process.env.REMETENTE_CPF || '').replace(/\D/g, ''),
     company_document: (process.env.REMETENTE_CNPJ || '').replace(/\D/g, ''),
     address: process.env.REMETENTE_ENDERECO,
@@ -68,9 +65,6 @@ export async function POST(req) {
     country_id: 'BR',
   };
 
-  // Faz o parse com segurança: se a API do Melhor Envio devolver HTML (erro de
-  // permissão, token expirado, indisponibilidade), evita o "Unexpected token '<'"
-  // e mostra o status HTTP + início do corpo da resposta para facilitar o diagnóstico.
   async function parseRespostaSegura(resp) {
     const texto = await resp.text();
     try {
@@ -81,7 +75,6 @@ export async function POST(req) {
   }
 
   try {
-    // 1. Adiciona no carrinho
     const cartResp = await fetch('https://melhorenvio.com.br/api/v2/me/cart', {
       method: 'POST',
       headers,
@@ -107,7 +100,6 @@ export async function POST(req) {
     }
     const orderId = cartData.id;
 
-    // 2. Paga com o saldo da carteira
     const checkoutResp = await fetch('https://melhorenvio.com.br/api/v2/me/shipment/checkout', {
       method: 'POST',
       headers,
@@ -121,7 +113,6 @@ export async function POST(req) {
       }, { status: 400 });
     }
 
-    // 3. Gera a etiqueta
     const generateResp = await fetch('https://melhorenvio.com.br/api/v2/me/shipment/generate', {
       method: 'POST',
       headers,
@@ -141,9 +132,11 @@ export async function POST(req) {
       headers,
       body: JSON.stringify({ orders: [orderId] }),
     });
-    const { data: trackData } = await parseRespostaSegura(trackResp);
-    // A resposta vem como { "<orderId>": { tracking: "AB123456789BR", ... } }
-    const codigoRastreio = trackData?.[orderId]?.tracking || null;
+    const { data: trackData, bruto: trackBruto } = await parseRespostaSegura(trackResp);
+    // Log temporário: aparece nos "Runtime Logs" da Vercel e mostra o formato
+    // exato que a API devolveu, para confirmarmos o campo certo do rastreio.
+    console.log(`[Rastreio] orderId=${orderId} status=${trackResp.status} resposta=${trackBruto.slice(0, 800)}`);
+    const codigoRastreio = trackData?.[orderId]?.tracking || trackData?.tracking || null;
 
     const { data: pedidoAtualizado } = await supabase
       .from('pedidos')
