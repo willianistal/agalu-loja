@@ -64,6 +64,18 @@ export async function POST(req) {
     country_id: 'BR',
   };
 
+  // Faz o parse com segurança: se a API do Melhor Envio devolver HTML (erro de
+  // permissão, token expirado, indisponibilidade), evita o "Unexpected token '<'"
+  // e mostra o status HTTP + início do corpo da resposta para facilitar o diagnóstico.
+  async function parseRespostaSegura(resp) {
+    const texto = await resp.text();
+    try {
+      return { data: JSON.parse(texto), bruto: texto };
+    } catch {
+      return { data: null, bruto: texto };
+    }
+  }
+
   try {
     // 1. Adiciona no carrinho
     const cartResp = await fetch('https://melhorenvio.com.br/api/v2/me/cart', {
@@ -82,9 +94,12 @@ export async function POST(req) {
         options: { insurance_value: pedido.total || 0, receipt: false, own_hand: false, non_commercial: true },
       }),
     });
-    const cartData = await cartResp.json();
-    if (!cartResp.ok || !cartData.id) {
-      return NextResponse.json({ erro: 'Erro ao adicionar no carrinho: ' + JSON.stringify(cartData) }, { status: 400 });
+    const { data: cartData, bruto: cartBruto } = await parseRespostaSegura(cartResp);
+    if (!cartResp.ok || !cartData || !cartData.id) {
+      return NextResponse.json({
+        erro: `Erro ao adicionar no carrinho (status ${cartResp.status}): ` +
+          (cartData ? JSON.stringify(cartData) : cartBruto.slice(0, 500)),
+      }, { status: 400 });
     }
     const orderId = cartData.id;
 
@@ -94,9 +109,12 @@ export async function POST(req) {
       headers,
       body: JSON.stringify({ orders: [orderId] }),
     });
-    const checkoutData = await checkoutResp.json();
+    const { data: checkoutData, bruto: checkoutBruto } = await parseRespostaSegura(checkoutResp);
     if (!checkoutResp.ok) {
-      return NextResponse.json({ erro: 'Erro ao pagar o frete: ' + JSON.stringify(checkoutData) }, { status: 400 });
+      return NextResponse.json({
+        erro: `Erro ao pagar o frete (status ${checkoutResp.status}): ` +
+          (checkoutData ? JSON.stringify(checkoutData) : checkoutBruto.slice(0, 500)),
+      }, { status: 400 });
     }
 
     // 3. Gera a etiqueta
@@ -105,14 +123,17 @@ export async function POST(req) {
       headers,
       body: JSON.stringify({ orders: [orderId] }),
     });
-    const generateData = await generateResp.json();
+    const { data: generateData, bruto: generateBruto } = await parseRespostaSegura(generateResp);
     if (!generateResp.ok) {
-      return NextResponse.json({ erro: 'Erro ao gerar etiqueta: ' + JSON.stringify(generateData) }, { status: 400 });
+      return NextResponse.json({
+        erro: `Erro ao gerar etiqueta (status ${generateResp.status}): ` +
+          (generateData ? JSON.stringify(generateData) : generateBruto.slice(0, 500)),
+      }, { status: 400 });
     }
 
     // 4. Busca o código de rastreio
     const trackResp = await fetch(`https://melhorenvio.com.br/api/v2/me/orders/${orderId}`, { headers });
-    const trackData = await trackResp.json();
+    const { data: trackData } = await parseRespostaSegura(trackResp);
     const codigoRastreio = trackData?.tracking || null;
 
     const { data: pedidoAtualizado } = await supabase
