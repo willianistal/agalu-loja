@@ -126,17 +126,27 @@ export async function POST(req) {
       }, { status: 400 });
     }
 
-    // 4. Busca o código de rastreio (endpoint correto: shipment/tracking)
-    const trackResp = await fetch('https://melhorenvio.com.br/api/v2/me/shipment/tracking', {
-      method: 'POST',
-      headers,
-      body: JSON.stringify({ orders: [orderId] }),
-    });
-    const { data: trackData, bruto: trackBruto } = await parseRespostaSegura(trackResp);
-    // Log temporário: aparece nos "Runtime Logs" da Vercel e mostra o formato
-    // exato que a API devolveu, para confirmarmos o campo certo do rastreio.
-    console.log(`[Rastreio] orderId=${orderId} status=${trackResp.status} resposta=${trackBruto.slice(0, 800)}`);
-    const codigoRastreio = trackData?.[orderId]?.tracking || trackData?.tracking || null;
+    // Busca o código de rastreio. O Melhor Envio pode levar alguns segundos
+    // para processar a etiqueta em segundo plano depois do /generate responder
+    // "OK" — por isso tentamos algumas vezes com uma pequena espera entre elas,
+    // em vez de checar só uma vez imediatamente (que às vezes vinha vazio).
+    function esperar(ms) {
+      return new Promise((resolve) => setTimeout(resolve, ms));
+    }
+
+    let codigoRastreio = null;
+    for (let tentativa = 1; tentativa <= 5; tentativa++) {
+      const trackResp = await fetch('https://melhorenvio.com.br/api/v2/me/shipment/tracking', {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({ orders: [orderId] }),
+      });
+      const { data: trackData, bruto: trackBruto } = await parseRespostaSegura(trackResp);
+      console.log(`[Rastreio] tentativa=${tentativa} orderId=${orderId} status=${trackResp.status} resposta=${trackBruto.slice(0, 800)}`);
+      codigoRastreio = trackData?.[orderId]?.tracking || trackData?.[orderId]?.melhorenvio_tracking || trackData?.tracking || null;
+      if (codigoRastreio) break;
+      if (tentativa < 5) await esperar(3000);
+    }
 
     const { data: pedidoAtualizado } = await supabase
       .from('pedidos')
