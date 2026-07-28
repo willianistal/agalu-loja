@@ -135,10 +135,15 @@ export async function POST(req) {
       }, { status: 400 });
     }
 
-    // 4. Busca o código de rastreio
-    const trackResp = await fetch(`https://melhorenvio.com.br/api/v2/me/orders/${orderId}`, { headers });
+    // 4. Busca o código de rastreio (endpoint correto: shipment/tracking)
+    const trackResp = await fetch('https://melhorenvio.com.br/api/v2/me/shipment/tracking', {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({ orders: [orderId] }),
+    });
     const { data: trackData } = await parseRespostaSegura(trackResp);
-    const codigoRastreio = trackData?.tracking || null;
+    // A resposta vem como { "<orderId>": { tracking: "AB123456789BR", ... } }
+    const codigoRastreio = trackData?.[orderId]?.tracking || null;
 
     const { data: pedidoAtualizado } = await supabase
       .from('pedidos')
