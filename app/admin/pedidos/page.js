@@ -200,7 +200,7 @@ export default function PedidosAdminPage() {
             <ul style={{ margin: '6px 0' }}>
               {(p.itens || []).map((item, i) => (
                 <li key={i}>
-                  {item.quantidade}x {item.nome} (Tam. {item.tamanho}) — REF {item.ref}
+                  {item.quantidade}x {item.nome} (Tam. {item.tamanho}{item.cor ? ` • Cor: ${item.cor}` : ''}) — REF {item.ref}
                 </li>
               ))}
             </ul>
