@@ -7,7 +7,7 @@ async function enviarEmailConfirmacao(pedido) {
   if (!apiKey || !pedido.cliente_email) return;
 
   const itensTexto = (pedido.itens || [])
-    .map((i) => `${i.quantidade}x ${i.nome} (Tam. ${i.tamanho}) — R$ ${Number(i.preco).toFixed(2)}`)
+    .map((i) => `${i.quantidade}x ${i.nome} (Tam. ${i.tamanho}${i.cor ? ` • Cor: ${i.cor}` : ''}) — R$ ${Number(i.preco).toFixed(2)}`)
     .join('<br>');
 
   try {
@@ -44,7 +44,7 @@ async function enviarWhatsAppVenda(pedido) {
   }
 
   const itensTexto = (pedido.itens || [])
-    .map((i) => `${i.quantidade}x ${i.nome} (Tam. ${i.tamanho})`)
+    .map((i) => `${i.quantidade}x ${i.nome} (Tam. ${i.tamanho}${i.cor ? ` • Cor: ${i.cor}` : ''})`)
     .join(', ');
 
   const texto = `🎉 Nova venda AGALU!\nCliente: ${pedido.cliente_nome || ''}\nItens: ${itensTexto}\nTotal: R$ ${Number(pedido.total || 0).toFixed(2)}`;
@@ -54,8 +54,6 @@ async function enviarWhatsAppVenda(pedido) {
       `https://api.callmebot.com/whatsapp.php?phone=${numero}&text=${encodeURIComponent(texto)}&apikey=${apiKey}`
     );
     const respostaTexto = await resp.text();
-    // Aparece nos "Runtime Logs" do projeto na Vercel — é o jeito de ver se o
-    // CallMeBot aceitou ou recusou o envio (ex.: telefone não autorizado, apikey inválida).
     console.log(`[WhatsApp] Status ${resp.status} — resposta do CallMeBot: ${respostaTexto.slice(0, 300)}`);
   } catch (e) {
     console.error('[WhatsApp] Erro ao chamar CallMeBot: ' + e.message);
