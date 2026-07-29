@@ -83,7 +83,7 @@ export async function POST(req) {
         from,
         to,
         products: (pedido.itens || []).map((i) => ({
-          name: i.nome,
+          name: `${i.nome}${i.cor ? ` - Cor: ${i.cor}` : ''}`,
           quantity: i.quantidade,
           unitary_value: i.preco,
         })),
