@@ -5,13 +5,13 @@ const statusPagamentoOpcoes = ['pendente', 'aguardando_confirmacao', 'pago', 're
 const statusEnvioOpcoes = ['aguardando_envio', 'etiqueta_gerada', 'enviado', 'entregue'];
 
 const abas = [
-  { chave: 'pendente', label: 'Pendente de pagamento', filtro: (p) => p.status_pagamento === 'pendente' },
-  { chave: 'atacado', label: 'Atacado (aguardando confirmação)', filtro: (p) => p.tipo === 'atacado' && p.status_pagamento === 'aguardando_confirmacao' },
-  { chave: 'pago', label: 'Pago', filtro: (p) => p.status_pagamento === 'pago' && p.status_envio === 'aguardando_envio' },
-  { chave: 'etiqueta', label: 'Etiqueta gerada', filtro: (p) => p.status_envio === 'etiqueta_gerada' },
-  { chave: 'enviado', label: 'Enviado', filtro: (p) => p.status_envio === 'enviado' },
-  { chave: 'entregue', label: 'Entregue', filtro: (p) => p.status_envio === 'entregue' },
-  { chave: 'todos', label: 'Todos', filtro: () => true },
+  { chave: 'pendente', label: 'Pendente de pagamento', filtro: function (p) { return p.status_pagamento === 'pendente'; } },
+  { chave: 'atacado', label: 'Atacado (aguardando confirmacao)', filtro: function (p) { return p.tipo === 'atacado' && p.status_pagamento === 'aguardando_confirmacao'; } },
+  { chave: 'pago', label: 'Pago', filtro: function (p) { return p.status_pagamento === 'pago' && p.status_envio === 'aguardando_envio'; } },
+  { chave: 'etiqueta', label: 'Etiqueta gerada', filtro: function (p) { return p.status_envio === 'etiqueta_gerada'; } },
+  { chave: 'enviado', label: 'Enviado', filtro: function (p) { return p.status_envio === 'enviado'; } },
+  { chave: 'entregue', label: 'Entregue', filtro: function (p) { return p.status_envio === 'entregue'; } },
+  { chave: 'todos', label: 'Todos', filtro: function () { return true; } },
 ];
 
 export default function PedidosAdminPage() {
@@ -53,11 +53,15 @@ export default function PedidosAdminPage() {
   }
 
   async function atualizarStatus(pedido, campo, valor) {
-    setPedidos((prev) => prev.map((p) => (p.id === pedido.id ? { ...p, [campo]: valor } : p)));
+    setPedidos(function (prev) {
+      return prev.map(function (p) {
+        return p.id === pedido.id ? Object.assign({}, p, { [campo]: valor }) : p;
+      });
+    });
     const res = await fetch('/api/pedidos', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'x-admin-password': senha },
-      body: JSON.stringify({ id: pedido.id, campo, valor }),
+      body: JSON.stringify({ id: pedido.id, campo: campo, valor: valor }),
     });
     const data = await res.json();
     if (data.erro) setErro(data.erro);
@@ -76,11 +80,13 @@ export default function PedidosAdminPage() {
       if (data.erro) {
         setErro('Erro ao gerar etiqueta: ' + data.erro);
       } else {
-        setPedidos((prev) =>
-          prev.map((p) =>
-            p.id === pedido.id ? { ...p, codigo_rastreio: data.codigo_rastreio, status_envio: 'etiqueta_gerada' } : p
-          )
-        );
+        setPedidos(function (prev) {
+          return prev.map(function (p) {
+            return p.id === pedido.id
+              ? Object.assign({}, p, { codigo_rastreio: data.codigo_rastreio, status_envio: 'etiqueta_gerada' })
+              : p;
+          });
+        });
       }
     } catch (e) {
       setErro('Erro inesperado ao gerar etiqueta.');
@@ -91,10 +97,10 @@ export default function PedidosAdminPage() {
   if (!autenticado) {
     return (
       <div className="container" style={{ padding: '60px 20px', maxWidth: 400 }}>
-        <h1>Painel AGALU — Pedidos</h1>
+        <h1>Painel AGALU - Pedidos</h1>
         <div className="form-linha">
           <label>Senha</label>
-          <input type="password" value={senha} onChange={(e) => setSenha(e.target.value)} />
+          <input type="password" value={senha} onChange={function (e) { setSenha(e.target.value); }} />
         </div>
         <button className="btn" onClick={handleLogin} disabled={carregando}>
           {carregando ? 'Entrando...' : 'Entrar'}
@@ -104,7 +110,7 @@ export default function PedidosAdminPage() {
     );
   }
 
-  const dentroDoIntervalo = (p) => {
+  const dentroDoIntervalo = function (p) {
     if (!dataInicio && !dataFim) return true;
     const dataPedido = new Date(p.criado_em);
     if (dataInicio && dataPedido < new Date(dataInicio + 'T00:00:00')) return false;
@@ -112,25 +118,24 @@ export default function PedidosAdminPage() {
     return true;
   };
 
-  const pedidosFiltrados = pedidos
-    .filter(abas.find((a) => a.chave === abaAtiva).filtro)
-    .filter(dentroDoIntervalo);
+  const abaObj = abas.find(function (a) { return a.chave === abaAtiva; });
+  const pedidosFiltrados = pedidos.filter(abaObj.filtro).filter(dentroDoIntervalo);
 
   return (
     <div className="container" style={{ padding: '30px 20px' }}>
-      <h1>Painel AGALU — Pedidos</h1>
-      <button className="btn btn-secundario" onClick={() => carregarPedidos(senha)} style={{ marginBottom: 16 }}>
+      <h1>Painel AGALU - Pedidos</h1>
+      <button className="btn btn-secundario" onClick={function () { carregarPedidos(senha); }} style={{ marginBottom: 16 }}>
         Atualizar lista
       </button>
 
       <div style={{ display: 'flex', gap: 8, marginBottom: 16, flexWrap: 'wrap' }}>
-        {abas.map((a) => {
+        {abas.map(function (a) {
           const qtd = pedidos.filter(a.filtro).length;
           const ativa = abaAtiva === a.chave;
           return (
             <button
               key={a.chave}
-              onClick={() => setAbaAtiva(a.chave)}
+              onClick={function () { setAbaAtiva(a.chave); }}
               style={{
                 padding: '8px 14px',
                 borderRadius: 20,
@@ -149,17 +154,17 @@ export default function PedidosAdminPage() {
       <div style={{ display: 'flex', gap: 12, alignItems: 'center', marginBottom: 20, flexWrap: 'wrap' }}>
         <div>
           <label style={{ display: 'block', fontSize: 13, marginBottom: 4 }}>De</label>
-          <input type="date" value={dataInicio} onChange={(e) => setDataInicio(e.target.value)} />
+          <input type="date" value={dataInicio} onChange={function (e) { setDataInicio(e.target.value); }} />
         </div>
         <div>
-          <label style={{ display: 'block', fontSize: 13, marginBottom: 4 }}>Até</label>
-          <input type="date" value={dataFim} onChange={(e) => setDataFim(e.target.value)} />
+          <label style={{ display: 'block', fontSize: 13, marginBottom: 4 }}>Ate</label>
+          <input type="date" value={dataFim} onChange={function (e) { setDataFim(e.target.value); }} />
         </div>
         {(dataInicio || dataFim) && (
           <button
             className="btn btn-secundario"
             style={{ marginTop: 18 }}
-            onClick={() => { setDataInicio(''); setDataFim(''); }}
+            onClick={function () { setDataInicio(''); setDataFim(''); }}
           >
             Limpar filtro de data
           </button>
@@ -167,111 +172,123 @@ export default function PedidosAdminPage() {
       </div>
 
       {erro && <p style={{ color: '#c0392b' }}>{erro}</p>}
-      {pedidosFiltrados.length === 0 && <p>Nenhum pedido nessa aba/período.</p>}
+      {pedidosFiltrados.length === 0 && <p>Nenhum pedido nessa aba/periodo.</p>}
 
-      {pedidosFiltrados.map((p) => (
-        <div key={p.id} style={{ border: '1px solid #f0e4de', borderRadius: 10, padding: 16, marginBottom: 14, background: 'white' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap', gap: 10 }}>
-            <div>
-              <strong>{p.cliente_nome || 'Sem nome'}</strong>
-              {p.tipo === 'atacado' && (
-                <span style={{ marginLeft: 8, background: '#eaf5f1', color: '#3d8570', fontSize: 12, fontWeight: 700, padding: '2px 8px', borderRadius: 10 }}>
-                  ATACADO
-                </span>
-              )}
-              <div style={{ color: '#8a827e', fontSize: 14 }}>{p.cliente_email} · {p.cliente_telefone}</div>
-              <div style={{ color: '#8a827e', fontSize: 14 }}>
-                {new Date(p.criado_em).toLocaleString('pt-BR')}
+      {pedidosFiltrados.map(function (p) {
+        return (
+          <div key={p.id} style={{ border: '1px solid #f0e4de', borderRadius: 10, padding: 16, marginBottom: 14, background: 'white' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap', gap: 10 }}>
+              <div>
+                <strong>{p.cliente_nome || 'Sem nome'}</strong>
+                {p.tipo === 'atacado' && (
+                  <span style={{ marginLeft: 8, background: '#eaf5f1', color: '#3d8570', fontSize: 12, fontWeight: 700, padding: '2px 8px', borderRadius: 10 }}>
+                    ATACADO
+                  </span>
+                )}
+                <div style={{ color: '#8a827e', fontSize: 14 }}>{p.cliente_email} - {p.cliente_telefone}</div>
+                <div style={{ color: '#8a827e', fontSize: 14 }}>
+                  {new Date(p.criado_em).toLocaleString('pt-BR')}
+                </div>
+              </div>
+              <div style={{ textAlign: 'right' }}>
+                <strong style={{ fontSize: 18 }}>R$ {Number(p.total || 0).toFixed(2)}</strong>
               </div>
             </div>
-            <div style={{ textAlign: 'right' }}>
-              <strong style={{ fontSize: 18 }}>R$ {Number(p.total || 0).toFixed(2)}</strong>
+
+            <div style={{ marginTop: 10 }}>
+              <strong>Endereco:</strong>{' '}
+              {p.endereco ? (
+                <span>
+                  {p.endereco.endereco}, {p.endereco.numero} {p.endereco.complemento} - {p.endereco.bairro},{' '}
+                  {p.endereco.cidade}/{p.endereco.uf} - CEP {p.endereco.cep}
+                </span>
+              ) : (
+                '-'
+              )}
             </div>
-          </div>
 
-          <div style={{ marginTop: 10 }}>
-            <strong>Endereço:</strong>{' '}
-            {p.endereco ? (
-              <span>
-                {p.endereco.endereco}, {p.endereco.numero} {p.endereco.complemento} — {p.endereco.bairro},{' '}
-                {p.endereco.cidade}/{p.endereco.uf} — CEP {p.endereco.cep}
-              </span>
-            ) : (
-              '—'
-            )}
-          </div>
-
-          <div style={{ marginTop: 10 }}>
-            <strong>Itens:</strong>
-            <ul style={{ margin: '6px 0' }}>
-              {(p.itens || []).map((item, i) => (
-                <li key={i}>
-                  {item.pacote ? (
-                    <>
-                      {item.nome} (Tam. {item.tamanho} • Pacote {item.genero}, {item.pacote} peças) x{item.quantidadePacotes} pacote(s)
-                    </>
-                  ) : (
-                    <>
-                      {item.quantidade}x {item.nome} (Tam. {item.tamanho}{item.cor ? ` • Cor: ${item.cor}` : ''}) — REF {item.ref}
-                    </>
-                  )}
-                </li>
-              ))}
-            </ul>
-            {p.frete && <div>Frete: {p.frete.nome} — R$ {Number(p.frete.preco || 0).toFixed(2)}</div>}
-          </div>
-
-          <div style={{ display: 'flex', gap: 16, marginTop: 12, flexWrap: 'wrap' }}>
-            <div>
-              <label style={{ display: 'block', fontSize: 13, marginBottom: 4 }}>Pagamento</label>
-              <select
-                value={p.status_pagamento}
-                onChange={(e) => atualizarStatus(p, 'status_pagamento', e.target.value)}
-              >
-                {statusPagamentoOpcoes.map((o) => (
-                  <option key={o} value={o}>{o}</option>
-                ))}
-              </select>
+            <div style={{ marginTop: 10 }}>
+              <strong>Itens:</strong>
+              <ul style={{ margin: '6px 0' }}>
+                {(p.itens || []).map(function (item, i) {
+                  return (
+                    <li key={i}>
+                      {item.pacote ? (
+                        <span>
+                          {item.nome} (Tam. {item.tamanho} - Pacote {item.genero}, {item.pacote} pecas) x{item.quantidadePacotes} pacote(s)
+                        </span>
+                      ) : (
+                        <span>
+                          {item.quantidade}x {item.nome} (Tam. {item.tamanho}{item.cor ? ' - Cor: ' + item.cor : ''}) - REF {item.ref}
+                        </span>
+                      )}
+                    </li>
+                  );
+                })}
+              </ul>
+              {p.frete && <div>Frete: {p.frete.nome} - R$ {Number(p.frete.preco || 0).toFixed(2)}</div>}
             </div>
-            <div>
-              <label style={{ display: 'block', fontSize: 13, marginBottom: 4 }}>Envio</label>
-              <select
-                value={p.status_envio}
-                onChange={(e) => atualizarStatus(p, 'status_envio', e.target.value)}
-              >
-                {statusEnvioOpcoes.map((o) => (
-                  <option key={o} value={o}>{o}</option>
-                ))}
-              </select>
+
+            <div style={{ display: 'flex', gap: 16, marginTop: 12, flexWrap: 'wrap' }}>
+              <div>
+                <label style={{ display: 'block', fontSize: 13, marginBottom: 4 }}>Pagamento</label>
+                <select
+                  value={p.status_pagamento}
+                  onChange={function (e) { atualizarStatus(p, 'status_pagamento', e.target.value); }}
+                >
+                  {statusPagamentoOpcoes.map(function (o) {
+                    return <option key={o} value={o}>{o}</option>;
+                  })}
+                </select>
+              </div>
+              <div>
+                <label style={{ display: 'block', fontSize: 13, marginBottom: 4 }}>Envio</label>
+                <select
+                  value={p.status_envio}
+                  onChange={function (e) { atualizarStatus(p, 'status_envio', e.target.value); }}
+                >
+                  {statusEnvioOpcoes.map(function (o) {
+                    return <option key={o} value={o}>{o}</option>;
+                  })}
+                </select>
+              </div>
             </div>
-          </div>
 
-          <div style={{ marginTop: 10 }}>
-            <label style={{ display: 'block', fontSize: 13, marginBottom: 4 }}>Código de rastreio</label>
-            <input
-              type="text"
-              defaultValue={p.codigo_rastreio || ''}
-              placeholder="Ex: BR123456789BR"
-              style={{ width: 220 }}
-              onBlur={(e) => atualizarStatus(p, 'codigo_rastreio', e.target.value)}
-            />
-            <span style={{ fontSize: 12, color: '#8a827e', marginLeft: 8 }}>
-              Preencha manualmente OU use o botão abaixo para gerar automático.
-            </span>
-          </div>
-
-          <div style={{ marginTop: 12 }}>
-            <button
-              className="btn"
-              onClick={() => gerarEtiqueta(p)}
-              disabled={gerandoEtiqueta === p.id || p.status_pagamento !== 'pago'}
-              style={{ background: '#6fb8a8' }}
-            >
-              {gerandoEtiqueta === p.id ? 'Gerando etiqueta...' : 'Gerar etiqueta automaticamente (Melhor Envio)'}
-            </button>
-            {p.status_pagamento !== 'pago' && (
+            <div style={{ marginTop: 10 }}>
+              <label style={{ display: 'block', fontSize: 13, marginBottom: 4 }}>Codigo de rastreio</label>
+              <input
+                type="text"
+                defaultValue={p.codigo_rastreio || ''}
+                placeholder="Ex: BR123456789BR"
+                style={{ width: 220 }}
+                onBlur={function (e) { atualizarStatus(p, 'codigo_rastreio', e.target.value); }}
+              />
               <span style={{ fontSize: 12, color: '#8a827e', marginLeft: 8 }}>
-                Disponível só depois que o pagamento estiver "pago".
+                Preencha manualmente OU use o botao abaixo para gerar automatico.
               </span>
-            )}
-            <p style={{ fontSize:
+            </div>
+
+            <div style={{ marginTop: 12 }}>
+              <button
+                className="btn"
+                onClick={function () { gerarEtiqueta(p); }}
+                disabled={gerandoEtiqueta === p.id || p.status_pagamento !== 'pago'}
+                style={{ background: '#6fb8a8' }}
+              >
+                {gerandoEtiqueta === p.id ? 'Gerando etiqueta...' : 'Gerar etiqueta automaticamente (Melhor Envio)'}
+              </button>
+              {p.status_pagamento !== 'pago' && (
+                <span style={{ fontSize: 12, color: '#8a827e', marginLeft: 8 }}>
+                  Disponivel so depois que o pagamento estiver "pago".
+                </span>
+              )}
+              <p style={{ fontSize: 12, color: '#8a827e', marginTop: 6 }}>
+                Depois de postar de verdade nos Correios, mude o "Envio" acima para <strong>enviado</strong> - e isso que dispara o e-mail de rastreio pro cliente.
+              </p>
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
