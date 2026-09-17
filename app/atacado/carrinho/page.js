@@ -18,8 +18,9 @@ export default function CarrinhoAtacadoPage() {
 
   function montarMensagem(pedidoId) {
     const linhas = itens.map(
-      (i) =>
-        '- ' + i.nome + ' - Tam. ' + i.tamanho + ' - Pacote ' + i.genero + ' (' + i.pacote + ' pecas) x' + i.quantidadePacotes + ' = ' + (i.pacote * i.quantidadePacotes) + ' pecas'
+      function (i) {
+        return '- ' + i.nome + ' - Tam. ' + i.tamanho + ' - Pacote ' + i.genero + ' (' + i.pacote + ' pecas) x' + i.quantidadePacotes + ' = ' + (i.pacote * i.quantidadePacotes) + ' pecas';
+      }
     );
     return (
       'Ola! Quero confirmar meu pedido de atacado AGALU\n\n' +
@@ -40,7 +41,7 @@ export default function CarrinhoAtacadoPage() {
       return;
     }
     if (itens.length === 0) {
-      setErro('Seu carrinho de atacado está vazio.');
+      setErro('Seu carrinho de atacado esta vazio.');
       return;
     }
 
@@ -49,7 +50,7 @@ export default function CarrinhoAtacadoPage() {
       const res = await fetch('/api/pedidos/atacado', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ itens, cliente: form, total }),
+        body: JSON.stringify({ itens: itens, cliente: form, total: total }),
       });
       const data = await res.json();
       if (data.erro) {
@@ -71,19 +72,13 @@ export default function CarrinhoAtacadoPage() {
         <div style={{ fontSize: 50, marginBottom: 10 }}>OK</div>
         <h1>Pedido gerado!</h1>
         <p style={{ color: '#8a827e', marginBottom: 24 }}>
-          Falta só um passo: clique no botão abaixo pra confirmar o pedido com a gente pelo WhatsApp.
+          Falta so um passo: clique no botao abaixo pra confirmar o pedido com a gente pelo WhatsApp.
         </p>
-        
-          href={linkWhats}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="btn"
-          style={{ background: '#25D366', display: 'inline-block' }}
-        >
+        <a href={linkWhats} target="_blank" rel="noopener noreferrer" className="btn btn-whatsapp">
           Confirmar pedido no WhatsApp
         </a>
         <div style={{ marginTop: 24 }}>
-          <Link href="/atacado" className="btn btn-secundario">Voltar ao catálogo</Link>
+          <Link href="/atacado" className="btn btn-secundario">Voltar ao catalogo</Link>
         </div>
       </div>
     );
@@ -93,34 +88,36 @@ export default function CarrinhoAtacadoPage() {
     <div className="container">
       <h1>Carrinho de Atacado</h1>
 
-      {itens.length === 0 && <p>Seu carrinho de atacado está vazio.</p>}
+      {itens.length === 0 && <p>Seu carrinho de atacado esta vazio.</p>}
 
-      {itens.map((item, i) => (
-        <div className="linha-carrinho" key={item.ref + '-' + item.tamanho + '-' + item.genero}>
-          <div>
-            <strong>{item.nome}</strong>
-            <p style={{ color: '#8a827e', margin: '4px 0' }}>
-              Tam. {item.tamanho} - Pacote {item.genero} ({item.pacote} pecas) - {item.tecido}
-            </p>
+      {itens.map(function (item, i) {
+        return (
+          <div className="linha-carrinho" key={item.ref + '-' + item.tamanho + '-' + item.genero}>
+            <div>
+              <strong>{item.nome}</strong>
+              <p style={{ color: '#8a827e', margin: '4px 0' }}>
+                Tam. {item.tamanho} - Pacote {item.genero} ({item.pacote} pecas) - {item.tecido}
+              </p>
+            </div>
+            <input
+              type="number"
+              min="1"
+              value={item.quantidadePacotes}
+              style={{ width: 60 }}
+              onChange={function (e) {
+                atualizarQuantidade(item.ref, item.tamanho, item.genero, Math.max(1, parseInt(e.target.value) || 1));
+              }}
+            />
+            <span>R$ {(item.precoAtacado * item.pacote * item.quantidadePacotes).toFixed(2)}</span>
+            <button className="btn-remover" onClick={function () { remover(item.ref, item.tamanho, item.genero); }}>
+              Remover
+            </button>
           </div>
-          <input
-            type="number"
-            min="1"
-            value={item.quantidadePacotes}
-            style={{ width: 60 }}
-            onChange={(e) =>
-              atualizarQuantidade(item.ref, item.tamanho, item.genero, Math.max(1, parseInt(e.target.value) || 1))
-            }
-          />
-          <span>R$ {(item.precoAtacado * item.pacote * item.quantidadePacotes).toFixed(2)}</span>
-          <button className="btn-remover" onClick={() => remover(item.ref, item.tamanho, item.genero)}>
-            Remover
-          </button>
-        </div>
-      ))}
+        );
+      })}
 
       {itens.length > 0 && (
-        <>
+        <div>
           <p style={{ textAlign: 'right', fontSize: 18 }}>
             Total: {totalPacotes} pacotes - {totalPecas} pecas - <strong>R$ {total.toFixed(2)}</strong>
           </p>
@@ -129,24 +126,24 @@ export default function CarrinhoAtacadoPage() {
             <h2 style={{ marginTop: 0 }}>Seus dados</h2>
             <div className="form-linha">
               <label>Nome</label>
-              <input value={form.nome} onChange={(e) => handleChange('nome', e.target.value)} />
+              <input value={form.nome} onChange={function (e) { handleChange('nome', e.target.value); }} />
             </div>
             <div className="form-linha">
               <label>Telefone (WhatsApp)</label>
-              <input value={form.telefone} onChange={(e) => handleChange('telefone', e.target.value)} placeholder="(11) 99999-9999" />
+              <input value={form.telefone} onChange={function (e) { handleChange('telefone', e.target.value); }} placeholder="(11) 99999-9999" />
             </div>
             <div className="form-linha">
               <label>E-mail (opcional)</label>
-              <input value={form.email} onChange={(e) => handleChange('email', e.target.value)} />
+              <input value={form.email} onChange={function (e) { handleChange('email', e.target.value); }} />
             </div>
 
             {erro && <p style={{ color: '#c0392b' }}>{erro}</p>}
 
-            <button className="btn" style={{ background: '#6fb8a8', width: '100%' }} onClick={finalizarPedido} disabled={enviando}>
+            <button className="btn btn-atacado-confirmar" onClick={finalizarPedido} disabled={enviando}>
               {enviando ? 'Gerando pedido...' : 'Gerar pedido e confirmar no WhatsApp'}
             </button>
           </div>
-        </>
+        </div>
       )}
     </div>
   );
