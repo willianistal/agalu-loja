@@ -1,68 +1,68 @@
 import Link from 'next/link';
-import { getProdutos, imagemProduto } from '../lib/produtos';
-import { formatarNomeProduto } from '../lib/produtoDisplay';
-import HeroCarousel from '../components/HeroCarousel';
-import SobreNos from '../components/SobreNos';
-import Avaliacoes from '../components/Avaliacoes';
 
 export default function Home() {
-  const produtos = getProdutos();
-  // pega uma peça com estampa (mais bonita pra vitrine) de cada estação, tecidos variados
-  const destaques = produtos
-    .filter((p) => p.detalhe)
-    .filter((p, i, arr) => arr.findIndex((x) => x.tecido === p.tecido && x.estacao === p.estacao) === i)
-    .slice(0, 8);
-
   return (
-    <>
-      <HeroCarousel />
+    <div className="container" style={{ padding: '50px 20px', textAlign: 'center' }}>
+      <img
+        src="/images/marca/logo.png"
+        alt="AGALU Confecções"
+        style={{ maxWidth: 180, margin: '0 auto 20px' }}
+      />
+      <h1 style={{ marginBottom: 6 }}>Bem-vindo à AGALU</h1>
+      <p style={{ color: '#8a827e', fontSize: 18, marginBottom: 40 }}>
+        Como você quer comprar hoje?
+      </p>
 
-      <div className="faixa-confianca">
-        <div className="faixa-confianca-inner">
-          <div className="selo-confianca-item"><span className="icone">🏷️</span>Preço único R$12</div>
-          <div className="selo-confianca-item"><span className="icone">🧵</span>4 tipos de tecido</div>
-          <div className="selo-confianca-item"><span className="icone">🚚</span>Frete calculado pelo CEP</div>
-          <div className="selo-confianca-item"><span className="icone">💳</span>Pix, Cartão e Boleto</div>
-        </div>
-      </div>
-
-      <h2 className="titulo-secao">Escolha a estação</h2>
-      <p className="subtitulo-secao">Peças leves pro calor ou quentinhas pro frio, no mesmo lugar</p>
-      <div className="secoes-home">
-        <Link href="/produtos?estacao=Verao" className="card-estacao">
-          <img src="/images/capas/verao.jpg" alt="Coleção Verão" />
-          <div className="card-overlay" />
-          <span>☀️ Coleção Verão<small>Regatas, camisetas e shorts leves</small></span>
+      <div
+        style={{
+          display: 'flex',
+          gap: 24,
+          justifyContent: 'center',
+          flexWrap: 'wrap',
+          maxWidth: 800,
+          margin: '0 auto',
+        }}
+      >
+        <Link
+          href="/varejo"
+          style={{
+            flex: '1 1 300px',
+            maxWidth: 340,
+            background: 'white',
+            border: '2px solid #f0e4de',
+            borderRadius: 16,
+            padding: '36px 24px',
+            textDecoration: 'none',
+            color: '#4a4442',
+          }}
+        >
+          <div style={{ fontSize: 44, marginBottom: 12 }}>🛍️</div>
+          <h2 style={{ margin: '0 0 8px', color: '#d97b93' }}>Comprar no Varejo</h2>
+          <p style={{ color: '#8a827e', margin: 0 }}>
+            Peça por peça, escolha a cor e o tamanho. Pagamento por Pix, Cartão ou Boleto.
+          </p>
         </Link>
-        <Link href="/produtos?estacao=Inverno" className="card-estacao">
-          <img src="/images/capas/inverno.jpg" alt="Coleção Inverno" />
-          <div className="card-overlay" />
-          <span>❄️ Coleção Inverno<small>Manga longa, canelado e suedine</small></span>
+
+        <Link
+          href="/atacado"
+          style={{
+            flex: '1 1 300px',
+            maxWidth: 340,
+            background: 'white',
+            border: '2px solid #f0e4de',
+            borderRadius: 16,
+            padding: '36px 24px',
+            textDecoration: 'none',
+            color: '#4a4442',
+          }}
+        >
+          <div style={{ fontSize: 44, marginBottom: 12 }}>📦</div>
+          <h2 style={{ margin: '0 0 8px', color: '#6fb8a8' }}>Comprar no Atacado</h2>
+          <p style={{ color: '#8a827e', margin: 0 }}>
+            Pacotes de 3, 6 ou 10 peças, sortimento Masculino ou Feminino. Ideal para lojistas.
+          </p>
         </Link>
       </div>
-
-      <h2 className="titulo-secao">Destaques do catálogo</h2>
-      <p className="subtitulo-secao">Uma amostra dos tecidos e estampas disponíveis</p>
-      <div className="destaques-grid">
-        {destaques.map((p) => (
-          <Link key={p.ref} href={`/produto/${p.ref}`} className="produto-card">
-            <img src={imagemProduto(p.ref)} alt={p.nome} />
-            <div className="info">
-              <p className="nome">{formatarNomeProduto(p.nome)}</p>
-              <p className="tecido">{p.tecido} • {p.estacao === 'Verao' ? 'Verão' : 'Inverno'}</p>
-              <p className="preco">R$ 12,00</p>
-            </div>
-          </Link>
-        ))}
-      </div>
-
-      <Avaliacoes />
-
-      <SobreNos />
-
-      <div style={{ textAlign: 'center', paddingBottom: 50 }}>
-        <Link href="/produtos" className="btn btn-secundario">Ver catálogo completo</Link>
-      </div>
-    </>
+    </div>
   );
 }
