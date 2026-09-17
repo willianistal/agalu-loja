@@ -6,7 +6,7 @@ export async function GET() {
   const supabase = getSupabase();
   if (!supabase) {
     return NextResponse.json({
-      produtos: produtosEstaticos.map((p) => ({ ...p, preco: 12, esgotado: false })),
+      produtos: produtosEstaticos.map((p) => ({ ...p, preco: 12, precoAtacado: 12, esgotado: false })),
       editavel: false,
     });
   }
@@ -14,7 +14,7 @@ export async function GET() {
   const { data, error } = await supabase.from('produtos').select('*');
   if (error || !data) {
     return NextResponse.json({
-      produtos: produtosEstaticos.map((p) => ({ ...p, preco: 12, esgotado: false })),
+      produtos: produtosEstaticos.map((p) => ({ ...p, preco: 12, precoAtacado: 12, esgotado: false })),
       editavel: false,
     });
   }
@@ -25,6 +25,8 @@ export async function GET() {
   const produtosMesclados = produtosEstaticos.map((p) => ({
     ...p,
     preco: mapaOverrides[p.ref]?.preco ?? 12,
+    precoAtacado: mapaOverrides[p.ref]?.preco_atacado ?? 12,
+    pacote: mapaOverrides[p.ref]?.pacote ?? p.pacote,
     esgotado: mapaOverrides[p.ref]?.esgotado ?? false,
   }));
 
@@ -42,11 +44,19 @@ export async function POST(req) {
   }
 
   const body = await req.json();
-  const { ref, preco, esgotado } = body;
+  const { ref, preco, precoAtacado, pacote, esgotado } = body;
+
+  const dadosAtuais = await supabase.from('produtos').select('*').eq('ref', ref).single();
 
   const { data, error } = await supabase
     .from('produtos')
-    .upsert({ ref, preco, esgotado })
+    .upsert({
+      ref,
+      preco: preco ?? dadosAtuais.data?.preco,
+      preco_atacado: precoAtacado ?? dadosAtuais.data?.preco_atacado,
+      pacote: pacote ?? dadosAtuais.data?.pacote,
+      esgotado: esgotado ?? dadosAtuais.data?.esgotado,
+    })
     .select();
 
   if (error) return NextResponse.json({ erro: error.message }, { status: 400 });
