@@ -100,7 +100,7 @@ export default function CarrinhoAtacadoPage() {
           <div>
             <strong>{item.nome}</strong>
             <p style={{ color: '#8a827e', margin: '4px 0' }}>
-              Tam. {item.tamanho} • Pacote {item.genero} ({item.pacote} peças) • {item.tecido}
+              Tam. {item.tamanho} - Pacote {item.genero} ({item.pacote} pecas) - {item.tecido}
             </p>
           </div>
           <input
@@ -122,7 +122,7 @@ export default function CarrinhoAtacadoPage() {
       {itens.length > 0 && (
         <>
           <p style={{ textAlign: 'right', fontSize: 18 }}>
-            Total: {totalPacotes} pacotes • {totalPecas} peças • <strong>R$ {total.toFixed(2)}</strong>
+            Total: {totalPacotes} pacotes - {totalPecas} pecas - <strong>R$ {total.toFixed(2)}</strong>
           </p>
 
           <div style={{ background: 'white', border: '1px solid #f0e4de', borderRadius: 12, padding: 20, marginTop: 20, maxWidth: 420 }}>
