@@ -1,6 +1,7 @@
 import './globals.css';
 import Script from 'next/script';
 import { CartProvider } from '../lib/CartContext';
+import { CartAtacadoProvider } from '../lib/CartAtacadoContext';
 import Header from '../components/Header';
 import WhatsAppButton from '../components/WhatsAppButton';
 
@@ -55,6 +56,7 @@ export default function RootLayout({ children }) {
         {/* End Meta Pixel Code */}
 
         <CartProvider>
+        <CartAtacadoProvider>
           <Header />
           {children}
           <WhatsAppButton />
@@ -64,6 +66,7 @@ export default function RootLayout({ children }) {
             </div>
             AGALU © {new Date().getFullYear()} — Roupas infantis direto da fábrica
           </footer>
+        </CartAtacadoProvider>
         </CartProvider>
       </body>
     </html>
