@@ -35,6 +35,8 @@ export default function AdminPage() {
     const corpo = {
       ref: produto.ref,
       preco: campo === 'preco' ? valor : produto.preco,
+      precoAtacado: campo === 'precoAtacado' ? valor : produto.precoAtacado,
+      pacote: campo === 'pacote' ? valor : produto.pacote,
       esgotado: campo === 'esgotado' ? valor : produto.esgotado,
     };
 
@@ -79,6 +81,8 @@ export default function AdminPage() {
             <th>Tecido</th>
             <th>Estação</th>
             <th>Preço</th>
+            <th>Preço Atacado</th>
+            <th>Pacote (peças)</th>
             <th>Estoque</th>
           </tr>
         </thead>
@@ -97,6 +101,24 @@ export default function AdminPage() {
                   disabled={!editavel}
                   style={{ width: 70 }}
                   onBlur={(e) => salvarProduto(p, 'preco', parseFloat(e.target.value))}
+                />
+              </td>
+              <td>
+                <input
+                  type="number"
+                  defaultValue={p.precoAtacado || 12}
+                  disabled={!editavel}
+                  style={{ width: 70 }}
+                  onBlur={(e) => salvarProduto(p, 'precoAtacado', parseFloat(e.target.value))}
+                />
+              </td>
+              <td>
+                <input
+                  type="number"
+                  defaultValue={p.pacote || 3}
+                  disabled={!editavel}
+                  style={{ width: 60 }}
+                  onBlur={(e) => salvarProduto(p, 'pacote', parseInt(e.target.value) || 1)}
                 />
               </td>
               <td>
