@@ -1,11 +1,12 @@
 'use client';
 import { useState } from 'react';
 
-const statusPagamentoOpcoes = ['pendente', 'pago', 'recusado', 'cancelado'];
+const statusPagamentoOpcoes = ['pendente', 'aguardando_confirmacao', 'pago', 'recusado', 'cancelado'];
 const statusEnvioOpcoes = ['aguardando_envio', 'etiqueta_gerada', 'enviado', 'entregue'];
 
 const abas = [
   { chave: 'pendente', label: 'Pendente de pagamento', filtro: (p) => p.status_pagamento === 'pendente' },
+  { chave: 'atacado', label: 'Atacado (aguardando confirmação)', filtro: (p) => p.tipo === 'atacado' && p.status_pagamento === 'aguardando_confirmacao' },
   { chave: 'pago', label: 'Pago', filtro: (p) => p.status_pagamento === 'pago' && p.status_envio === 'aguardando_envio' },
   { chave: 'etiqueta', label: 'Etiqueta gerada', filtro: (p) => p.status_envio === 'etiqueta_gerada' },
   { chave: 'enviado', label: 'Enviado', filtro: (p) => p.status_envio === 'enviado' },
@@ -173,6 +174,11 @@ export default function PedidosAdminPage() {
           <div style={{ display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap', gap: 10 }}>
             <div>
               <strong>{p.cliente_nome || 'Sem nome'}</strong>
+              {p.tipo === 'atacado' && (
+                <span style={{ marginLeft: 8, background: '#eaf5f1', color: '#3d8570', fontSize: 12, fontWeight: 700, padding: '2px 8px', borderRadius: 10 }}>
+                  ATACADO
+                </span>
+              )}
               <div style={{ color: '#8a827e', fontSize: 14 }}>{p.cliente_email} · {p.cliente_telefone}</div>
               <div style={{ color: '#8a827e', fontSize: 14 }}>
                 {new Date(p.criado_em).toLocaleString('pt-BR')}
@@ -200,7 +206,15 @@ export default function PedidosAdminPage() {
             <ul style={{ margin: '6px 0' }}>
               {(p.itens || []).map((item, i) => (
                 <li key={i}>
-                  {item.quantidade}x {item.nome} (Tam. {item.tamanho}{item.cor ? ` • Cor: ${item.cor}` : ''}) — REF {item.ref}
+                  {item.pacote ? (
+                    <>
+                      {item.nome} (Tam. {item.tamanho} • Pacote {item.genero}, {item.pacote} peças) x{item.quantidadePacotes} pacote(s)
+                    </>
+                  ) : (
+                    <>
+                      {item.quantidade}x {item.nome} (Tam. {item.tamanho}{item.cor ? ` • Cor: ${item.cor}` : ''}) — REF {item.ref}
+                    </>
+                  )}
                 </li>
               ))}
             </ul>
@@ -260,12 +274,4 @@ export default function PedidosAdminPage() {
                 Disponível só depois que o pagamento estiver "pago".
               </span>
             )}
-            <p style={{ fontSize: 12, color: '#8a827e', marginTop: 6 }}>
-              Depois de postar de verdade nos Correios, mude o "Envio" acima para <strong>enviado</strong> — é isso que dispara o e-mail de rastreio pro cliente.
-            </p>
-          </div>
-        </div>
-      ))}
-    </div>
-  );
-}
+            <p style={{ fontSize:
