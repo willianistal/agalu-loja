@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { useCartAtacado } from '../../../lib/CartAtacadoContext';
 
 const NUMERO_WHATSAPP = process.env.NEXT_PUBLIC_WHATSAPP || '5511920502244';
+const PEDIDO_MINIMO = 500;
 
 export default function CarrinhoAtacadoPage() {
   const { itens, remover, atualizarQuantidade, limpar, total, totalPacotes, totalPecas } = useCartAtacado();
@@ -38,6 +39,14 @@ export default function CarrinhoAtacadoPage() {
 
   async function finalizarPedido() {
     setErro('');
+    if (itens.length === 0) {
+      setErro('Seu carrinho de atacado esta vazio.');
+      return;
+    }
+    if (total < PEDIDO_MINIMO) {
+      setErro('Pedido minimo para atacado: R$ ' + PEDIDO_MINIMO.toFixed(2) + '. Falta R$ ' + (PEDIDO_MINIMO - total).toFixed(2) + ' para atingir o minimo.');
+      return;
+    }
     if (!form.nome || !form.telefone) {
       setErro('Preencha nome e telefone antes de confirmar.');
       return;
@@ -45,10 +54,6 @@ export default function CarrinhoAtacadoPage() {
     const cnpjLimpo = (form.cnpj || '').replace(/\D/g, '');
     if (cnpjLimpo.length !== 14) {
       setErro('Vendas no atacado exigem CNPJ valido (14 digitos). Compras com CPF devem ser feitas no varejo.');
-      return;
-    }
-    if (itens.length === 0) {
-      setErro('Seu carrinho de atacado esta vazio.');
       return;
     }
 
@@ -129,8 +134,18 @@ export default function CarrinhoAtacadoPage() {
             Total: {totalPacotes} pacotes - {totalPecas} pecas - <strong>R$ {total.toFixed(2)}</strong>
           </p>
 
+          {total < PEDIDO_MINIMO ? (
+            <p style={{ textAlign: 'right', color: '#c0392b', fontSize: 14 }}>
+              Pedido minimo de R$ {PEDIDO_MINIMO.toFixed(2)} - falta R$ {(PEDIDO_MINIMO - total).toFixed(2)}
+            </p>
+          ) : (
+            <p style={{ textAlign: 'right', color: '#3d8570', fontSize: 14 }}>
+              Pedido minimo de R$ {PEDIDO_MINIMO.toFixed(2)} atingido
+            </p>
+          )}
+
           <div style={{ background: '#fff8e6', border: '1px solid #f0dca0', borderRadius: 10, padding: 14, marginTop: 16, maxWidth: 420, fontSize: 13, color: '#8a6d1e' }}>
-            <strong>Atencao:</strong> vendas no atacado sao exclusivas para pessoa juridica (CNPJ). O frete e por conta do comprador e o valor sera combinado apos a confirmacao do pedido.
+            <strong>Atencao:</strong> vendas no atacado sao exclusivas para pessoa juridica (CNPJ), com pedido minimo de R$ {PEDIDO_MINIMO.toFixed(2)}. O frete e por conta do comprador e o valor sera combinado apos a confirmacao do pedido.
           </div>
 
           <div style={{ background: 'white', border: '1px solid #f0e4de', borderRadius: 12, padding: 20, marginTop: 20, maxWidth: 420 }}>
@@ -154,8 +169,8 @@ export default function CarrinhoAtacadoPage() {
 
             {erro && <p style={{ color: '#c0392b' }}>{erro}</p>}
 
-            <button className="btn btn-atacado-confirmar" onClick={finalizarPedido} disabled={enviando}>
-              {enviando ? 'Gerando pedido...' : 'Gerar pedido e confirmar no WhatsApp'}
+            <button className="btn btn-atacado-confirmar" onClick={finalizarPedido} disabled={enviando || total < PEDIDO_MINIMO}>
+              {enviando ? 'Gerando pedido...' : (total < PEDIDO_MINIMO ? 'Adicione mais itens para atingir o minimo' : 'Gerar pedido e confirmar no WhatsApp')}
             </button>
           </div>
         </div>
