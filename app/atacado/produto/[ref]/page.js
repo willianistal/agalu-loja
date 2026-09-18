@@ -62,7 +62,7 @@ export default function ProdutoAtacadoDetalhe() {
           <p style={{ color: '#8a827e' }}>Tecido: {produto.tecido} • Estação: {produto.estacao} • REF {produto.ref}</p>
           <p style={{ color: '#8a827e' }}>Composição: {getComposicaoTecido(produto.tecido)}</p>
           <p style={{ background: '#eaf5f1', display: 'inline-block', padding: '4px 10px', borderRadius: 8, fontWeight: 600, color: '#3d8570' }}>
-            Pacote fechado com {pacote} peças (sortimento definido pela AGALU)
+            Pacote sortido com {pacote} peças (cores variadas, sortimento definido pela AGALU)
           </p>
           <p style={{ fontSize: 32, fontWeight: 800, color: '#6fb8a8', marginTop: 10 }}>
             R$ {(Number(precoAtacado) * pacote).toFixed(2)} <span style={{ fontSize: 16, fontWeight: 500, color: '#8a827e' }}>por pacote</span>
@@ -71,7 +71,7 @@ export default function ProdutoAtacadoDetalhe() {
             <p style={{ color: '#c0392b', fontWeight: 700, fontSize: 18 }}>Produto esgotado no momento</p>
           )}
 
-          <p style={{ fontWeight: 700 }}>Sortimento do pacote:</p>
+          <p style={{ fontWeight: 700 }}>Pacote sortido (cores variadas) - Masculino ou Feminino:</p>
           <div className="tamanhos">
             {GENEROS.map((g) => (
               <div
