@@ -275,7 +275,7 @@ export default function PedidosAdminPage() {
                     <li key={i}>
                       {item.pacote ? (
                         <span>
-                          {item.nome} (Tam. {item.tamanho} - Pacote {item.genero}, {item.pacote} pecas) x{item.quantidadePacotes} pacote(s)
+                          {item.nome} (Tam. {item.tamanho} - Pacote {item.genero}, {item.pacote} pecas) x{item.quantidadePacotes} pacote(s) - REF {item.ref}
                         </span>
                       ) : (
                         <span>
