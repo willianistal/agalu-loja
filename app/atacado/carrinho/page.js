@@ -7,7 +7,7 @@ const NUMERO_WHATSAPP = process.env.NEXT_PUBLIC_WHATSAPP || '5511920502244';
 
 export default function CarrinhoAtacadoPage() {
   const { itens, remover, atualizarQuantidade, limpar, total, totalPacotes, totalPecas } = useCartAtacado();
-  const [form, setForm] = useState({ nome: '', telefone: '', email: '' });
+  const [form, setForm] = useState({ nome: '', cnpj: '', telefone: '', email: '' });
   const [enviando, setEnviando] = useState(false);
   const [erro, setErro] = useState('');
   const [linkWhats, setLinkWhats] = useState(null);
@@ -25,12 +25,14 @@ export default function CarrinhoAtacadoPage() {
     return (
       'Ola! Quero confirmar meu pedido de atacado AGALU\n\n' +
       'Pedido: ' + (pedidoId || '') + '\n' +
-      'Nome: ' + form.nome + '\n' +
+      'Nome/Empresa: ' + form.nome + '\n' +
+      'CNPJ: ' + form.cnpj + '\n' +
       'Telefone: ' + form.telefone + '\n\n' +
       linhas.join('\n') +
       '\n\nTotal de pacotes: ' + totalPacotes + '\n' +
       'Total de pecas: ' + totalPecas + '\n' +
-      'Total: R$ ' + total.toFixed(2)
+      'Total (mercadoria): R$ ' + total.toFixed(2) + '\n' +
+      'Frete: por conta do comprador (a combinar)'
     );
   }
 
@@ -38,6 +40,11 @@ export default function CarrinhoAtacadoPage() {
     setErro('');
     if (!form.nome || !form.telefone) {
       setErro('Preencha nome e telefone antes de confirmar.');
+      return;
+    }
+    const cnpjLimpo = (form.cnpj || '').replace(/\D/g, '');
+    if (cnpjLimpo.length !== 14) {
+      setErro('Vendas no atacado exigem CNPJ valido (14 digitos). Compras com CPF devem ser feitas no varejo.');
       return;
     }
     if (itens.length === 0) {
@@ -122,11 +129,19 @@ export default function CarrinhoAtacadoPage() {
             Total: {totalPacotes} pacotes - {totalPecas} pecas - <strong>R$ {total.toFixed(2)}</strong>
           </p>
 
+          <div style={{ background: '#fff8e6', border: '1px solid #f0dca0', borderRadius: 10, padding: 14, marginTop: 16, maxWidth: 420, fontSize: 13, color: '#8a6d1e' }}>
+            <strong>Atencao:</strong> vendas no atacado sao exclusivas para pessoa juridica (CNPJ). O frete e por conta do comprador e o valor sera combinado apos a confirmacao do pedido.
+          </div>
+
           <div style={{ background: 'white', border: '1px solid #f0e4de', borderRadius: 12, padding: 20, marginTop: 20, maxWidth: 420 }}>
             <h2 style={{ marginTop: 0 }}>Seus dados</h2>
             <div className="form-linha">
-              <label>Nome</label>
+              <label>Nome / Empresa</label>
               <input value={form.nome} onChange={function (e) { handleChange('nome', e.target.value); }} />
+            </div>
+            <div className="form-linha">
+              <label>CNPJ</label>
+              <input value={form.cnpj} onChange={function (e) { handleChange('cnpj', e.target.value); }} placeholder="00.000.000/0000-00" />
             </div>
             <div className="form-linha">
               <label>Telefone (WhatsApp)</label>
