@@ -4,9 +4,17 @@ import { useState } from 'react';
 const statusPagamentoOpcoes = ['pendente', 'aguardando_confirmacao', 'pago', 'recusado', 'cancelado'];
 const statusEnvioOpcoes = ['aguardando_envio', 'etiqueta_gerada', 'enviado', 'entregue'];
 
-const abas = [
+const abasVarejo = [
   { chave: 'pendente', label: 'Pendente de pagamento', filtro: function (p) { return p.status_pagamento === 'pendente'; } },
-  { chave: 'atacado', label: 'Atacado (aguardando confirmacao)', filtro: function (p) { return p.tipo === 'atacado' && p.status_pagamento === 'aguardando_confirmacao'; } },
+  { chave: 'pago', label: 'Pago', filtro: function (p) { return p.status_pagamento === 'pago' && p.status_envio === 'aguardando_envio'; } },
+  { chave: 'etiqueta', label: 'Etiqueta gerada', filtro: function (p) { return p.status_envio === 'etiqueta_gerada'; } },
+  { chave: 'enviado', label: 'Enviado', filtro: function (p) { return p.status_envio === 'enviado'; } },
+  { chave: 'entregue', label: 'Entregue', filtro: function (p) { return p.status_envio === 'entregue'; } },
+  { chave: 'todos', label: 'Todos', filtro: function () { return true; } },
+];
+
+const abasAtacado = [
+  { chave: 'aguardando', label: 'Aguardando confirmacao', filtro: function (p) { return p.status_pagamento === 'aguardando_confirmacao'; } },
   { chave: 'pago', label: 'Pago', filtro: function (p) { return p.status_pagamento === 'pago' && p.status_envio === 'aguardando_envio'; } },
   { chave: 'etiqueta', label: 'Etiqueta gerada', filtro: function (p) { return p.status_envio === 'etiqueta_gerada'; } },
   { chave: 'enviado', label: 'Enviado', filtro: function (p) { return p.status_envio === 'enviado'; } },
@@ -20,6 +28,7 @@ export default function PedidosAdminPage() {
   const [erro, setErro] = useState('');
   const [pedidos, setPedidos] = useState([]);
   const [carregando, setCarregando] = useState(false);
+  const [visao, setVisao] = useState(null); // null | 'varejo' | 'atacado'
   const [abaAtiva, setAbaAtiva] = useState('pendente');
   const [gerandoEtiqueta, setGerandoEtiqueta] = useState(null);
   const [dataInicio, setDataInicio] = useState('');
@@ -50,6 +59,11 @@ export default function PedidosAdminPage() {
     } else {
       setErro('Digite a senha.');
     }
+  }
+
+  function escolherVisao(v) {
+    setVisao(v);
+    setAbaAtiva(v === 'atacado' ? 'aguardando' : 'pendente');
   }
 
   async function atualizarStatus(pedido, campo, valor) {
@@ -110,6 +124,45 @@ export default function PedidosAdminPage() {
     );
   }
 
+  if (!visao) {
+    const qtdVarejo = pedidos.filter(function (p) { return p.tipo !== 'atacado'; }).length;
+    const qtdAtacado = pedidos.filter(function (p) { return p.tipo === 'atacado'; }).length;
+    return (
+      <div className="container" style={{ padding: '50px 20px', textAlign: 'center' }}>
+        <h1>Painel AGALU - Pedidos</h1>
+        <p style={{ color: '#8a827e', fontSize: 18, marginBottom: 30 }}>Quais pedidos voce quer ver?</p>
+        <div style={{ display: 'flex', gap: 20, justifyContent: 'center', flexWrap: 'wrap' }}>
+          <div
+            onClick={function () { escolherVisao('varejo'); }}
+            style={{ cursor: 'pointer', background: 'white', border: '2px solid #f0e4de', borderRadius: 14, padding: '30px 26px', minWidth: 220 }}
+          >
+            <div style={{ fontSize: 36, marginBottom: 8 }}>{'\uD83D\uDECD\uFE0F'}</div>
+            <h2 style={{ margin: '0 0 6px', color: '#d97b93' }}>Varejo</h2>
+            <p style={{ color: '#8a827e', margin: 0 }}>{qtdVarejo} pedido(s)</p>
+          </div>
+          <div
+            onClick={function () { escolherVisao('atacado'); }}
+            style={{ cursor: 'pointer', background: 'white', border: '2px solid #f0e4de', borderRadius: 14, padding: '30px 26px', minWidth: 220 }}
+          >
+            <div style={{ fontSize: 36, marginBottom: 8 }}>{'\uD83D\uDCE6'}</div>
+            <h2 style={{ margin: '0 0 6px', color: '#6fb8a8' }}>Atacado</h2>
+            <p style={{ color: '#8a827e', margin: 0 }}>{qtdAtacado} pedido(s)</p>
+          </div>
+        </div>
+        <div style={{ marginTop: 30 }}>
+          <button className="btn btn-secundario" onClick={function () { carregarPedidos(senha); }}>
+            Atualizar contagem
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  const abas = visao === 'atacado' ? abasAtacado : abasVarejo;
+  const pedidosDaVisao = pedidos.filter(function (p) {
+    return visao === 'atacado' ? p.tipo === 'atacado' : p.tipo !== 'atacado';
+  });
+
   const dentroDoIntervalo = function (p) {
     if (!dataInicio && !dataFim) return true;
     const dataPedido = new Date(p.criado_em);
@@ -118,19 +171,26 @@ export default function PedidosAdminPage() {
     return true;
   };
 
-  const abaObj = abas.find(function (a) { return a.chave === abaAtiva; });
-  const pedidosFiltrados = pedidos.filter(abaObj.filtro).filter(dentroDoIntervalo);
+  const abaObj = abas.find(function (a) { return a.chave === abaAtiva; }) || abas[0];
+  const pedidosFiltrados = pedidosDaVisao.filter(abaObj.filtro).filter(dentroDoIntervalo);
 
   return (
     <div className="container" style={{ padding: '30px 20px' }}>
-      <h1>Painel AGALU - Pedidos</h1>
-      <button className="btn btn-secundario" onClick={function () { carregarPedidos(senha); }} style={{ marginBottom: 16 }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 10 }}>
+        <h1 style={{ margin: 0 }}>
+          Painel AGALU - Pedidos {visao === 'atacado' ? '(Atacado)' : '(Varejo)'}
+        </h1>
+        <button className="btn btn-secundario" onClick={function () { setVisao(null); }}>
+          Trocar visao
+        </button>
+      </div>
+      <button className="btn btn-secundario" onClick={function () { carregarPedidos(senha); }} style={{ marginTop: 12, marginBottom: 16 }}>
         Atualizar lista
       </button>
 
       <div style={{ display: 'flex', gap: 8, marginBottom: 16, flexWrap: 'wrap' }}>
         {abas.map(function (a) {
-          const qtd = pedidos.filter(a.filtro).length;
+          const qtd = pedidosDaVisao.filter(a.filtro).length;
           const ativa = abaAtiva === a.chave;
           return (
             <button
