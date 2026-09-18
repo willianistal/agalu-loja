@@ -19,7 +19,7 @@ export default function CarrinhoAtacadoPage() {
   function montarMensagem(pedidoId) {
     const linhas = itens.map(
       function (i) {
-        return '- ' + i.nome + ' - Tam. ' + i.tamanho + ' - Pacote ' + i.genero + ' (' + i.pacote + ' pecas) x' + i.quantidadePacotes + ' = ' + (i.pacote * i.quantidadePacotes) + ' pecas';
+        return '- ' + i.nome + ' - REF ' + i.ref + ' - Tam. ' + i.tamanho + ' - Pacote ' + i.genero + ' (' + i.pacote + ' pecas) x' + i.quantidadePacotes + ' = ' + (i.pacote * i.quantidadePacotes) + ' pecas';
       }
     );
     return (
