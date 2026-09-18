@@ -245,7 +245,7 @@ export default function PedidosAdminPage() {
                     ATACADO
                   </span>
                 )}
-                <div style={{ color: '#8a827e', fontSize: 14 }}>{p.cliente_email} - {p.cliente_telefone}</div>
+                <div style={{ color: '#8a827e', fontSize: 14 }}>{p.cliente_email} - {p.cliente_telefone}{p.cliente_cnpj ? ' - CNPJ: ' + p.cliente_cnpj : ''}</div>
                 <div style={{ color: '#8a827e', fontSize: 14 }}>
                   {new Date(p.criado_em).toLocaleString('pt-BR')}
                 </div>
